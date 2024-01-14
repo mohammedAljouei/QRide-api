@@ -6,11 +6,64 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Requests\StoreMenuRequest;
 use App\Http\Requests\UpdateMenuRequest;
 use App\Models\Menu;
+use App\Models\Section;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request; 
 
 class MenuController extends Controller
 {
+
+
+    // newly added by mohammed 
+
+    public function getMenu($menuId)
+    {
+        $menu = Menu::with(['sections.meals.addOnTitles.addOnInfos'])
+                    ->where('id', $menuId)
+                    ->first();
+    
+        if (!$menu) {
+            return response()->json(['error' => 'Menu not found'], 404);
+        }
+    
+        $transformedMenu = [
+            'menuId' => $menu->id,
+            'sections' => $menu->sections ? $menu->sections->map(function ($section) {
+                return [
+                    'sectionId' => $section->id,
+                    'sectionName' => $section->name, // Replace with actual field name in Section model
+                    'meals' => $section->meals ? $section->meals->map(function ($meal) {
+                        return [
+                            'mealId' => $meal->id,
+                            'isAvailable' => $meal->status == 1 ? true : false,
+                            'imagePath' => $meal->image_path,
+                            'mealName' => $meal->name,
+                            'description' => $meal->description,
+                            'price' => $meal->price,
+                            // Include other meal fields here...
+                            'addOns' => $meal->addOnTitles ? $meal->addOnTitles->map(function ($addOnTitle) {
+                                return [
+                                    'title' => $addOnTitle->title, 
+                                    'min' => $addOnTitle->min,
+                                    'max' => $addOnTitle->max, 
+                                    'addOnsItems' => $addOnTitle->addOnInfos ? $addOnTitle->addOnInfos->map(function ($addOnInfo) {
+                                        return [
+                                            'addOnName' => $addOnInfo->name, // Replace with actual field name in AddOnInfo
+                                            'addOnPrice' => $addOnInfo->price // Replace with actual field name in AddOnInfo
+                                        ];
+                                    }) : []
+                                ];
+                            }) : []
+                        ];
+                    }) : []
+                ];
+            }) : []
+        ];
+    
+        return response()->json(['menu' => $transformedMenu]);
+    }
+    
+// end func added by mohammed
     /**
      * Display a listing of the resource.
      */

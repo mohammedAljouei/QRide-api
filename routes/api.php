@@ -38,6 +38,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::apiResource('add-on-titles' , AddOnTitleController::class); 
    Route::apiResource('meals' , MealController::class); 
    Route::apiResource('orders' , OrderController::class); 
+   // Route::get('/menu', 'MenuController@getMenu'); // added by mohammed 
+   Route::get('/menu/{menu}', 'MenuController@getMenu'); // added by mohammed 
+
 
 
 
@@ -60,6 +63,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 
     Route::apiResource('sections' , SectionController::class); 
     Route::get('sections/shop/{menu}', [SectionController::class, 'byMenu']);
+    // Inside routes/api.php or routes/web.php
+   
+
     // need delete section
 
 
