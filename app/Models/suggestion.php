@@ -9,7 +9,15 @@ class suggestion extends Model
 {
     use HasFactory;
 
-    public function menu() {
-        return $this->belongsTo(Menu::class);
+
+    protected $fillable = [
+        'order_id',
+        'message',
+        'star',
+        ];
+
+        
+    public function order() {
+        return $this->belongsTo(Order::class);
     }
 }

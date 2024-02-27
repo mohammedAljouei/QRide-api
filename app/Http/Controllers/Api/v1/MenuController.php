@@ -14,7 +14,6 @@ class MenuController extends Controller
 {
 
 
-    // newly added by mohammed 
 
     public function getMenu($menuId)
     {
@@ -60,6 +59,9 @@ class MenuController extends Controller
             }) : []
         ];
     
+
+
+      
         return response()->json(['menu' => $transformedMenu]);
     }
     
