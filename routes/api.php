@@ -5,6 +5,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OtpController;
 use App\Http\Controllers\Api\v1\SectionController;
+use App\Http\Controllers\Api\v1\AddOnInfoController;
+use App\Http\Controllers\Api\v1\AddOnTitleController;
+use App\Http\Controllers\Api\v1\MealController;
+use App\Http\Controllers\Api\v1\OrderController;
+use App\Http\Controllers\Api\v1\ShopUIController;
+use App\Http\Controllers\Api\v1\AdminController;
+use App\Http\Controllers\Api\v1\SuggestionController;
+use App\Http\Controllers\Api\v1\SuperAdminController;
+use App\Http\Controllers\Api\v1\MenuController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +57,8 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::post('/place-order', 'OrderController@placeOrder'); 
    Route::get('/orders/{order}', 'OrderController@getOrder'); 
    Route::post('/post-feedback', 'SuggestionController@postFeedBack'); 
+
+   Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); 
 
 
 

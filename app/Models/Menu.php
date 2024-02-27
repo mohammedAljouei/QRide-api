@@ -15,12 +15,12 @@ class Menu extends Model
     // TO DO: change the class Name to Shop
 
 
-
     protected $fillable = [
         'admin_id',
         'super_admin_id',
         'version',
         'status',
+        'payment_methods',
     
         // other attributes...
     ];

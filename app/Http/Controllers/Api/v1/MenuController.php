@@ -13,7 +13,14 @@ use Illuminate\Http\Request;
 class MenuController extends Controller
 {
 
+    public function getPaymentMenu($menuId)
+    {
+        $menu = Menu::find($menuId);
+        $paymentMethods = $menu->payment_methods;
 
+    
+        return response()->json(['paymentMethods' => $paymentMethods]);
+    }
 
     public function getMenu($menuId)
     {
