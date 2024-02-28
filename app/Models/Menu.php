@@ -15,16 +15,21 @@ class Menu extends Model
     // TO DO: change the class Name to Shop
 
 
+
+
+
     protected $fillable = [
         'admin_id',
         'super_admin_id',
         'version',
         'status',
-        'payment_methods',
-    
-        // other attributes...
+        'payment_methods', // Make sure this is fillable if you're using create() method
+        // Add other attributes as needed
     ];
 
+    protected $casts = [
+        'payment_methods' => 'array', // This will cast payment_methods to and from JSON
+    ];
 
     public function admin() {
         return $this->belongsTo(Admin::class);

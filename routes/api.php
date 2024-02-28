@@ -4,16 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OtpController;
+
 use App\Http\Controllers\Api\v1\SectionController;
-use App\Http\Controllers\Api\v1\AddOnInfoController;
-use App\Http\Controllers\Api\v1\AddOnTitleController;
-use App\Http\Controllers\Api\v1\MealController;
-use App\Http\Controllers\Api\v1\OrderController;
-use App\Http\Controllers\Api\v1\ShopUIController;
-use App\Http\Controllers\Api\v1\AdminController;
-use App\Http\Controllers\Api\v1\SuggestionController;
-use App\Http\Controllers\Api\v1\SuperAdminController;
-use App\Http\Controllers\Api\v1\MenuController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,9 +30,6 @@ Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
 // Logout
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-
-
-
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
@@ -51,18 +40,14 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::apiResource('add-on-titles' , AddOnTitleController::class); 
    Route::apiResource('meals' , MealController::class); 
    Route::apiResource('orders' , OrderController::class); 
-   Route::get('/menu/{menu}', 'MenuController@getMenu'); 
+   Route::get('/menu/{menu}', 'MenuController@getMenu'); // added by mohammed 
+   Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); // added by mohammed 
+
    Route::post('/generate-otp', 'OtpController@generateOTP');
    Route::post('/verify-otp',  'OtpController@verifyOTP');
    Route::post('/place-order', 'OrderController@placeOrder'); 
    Route::get('/orders/{order}', 'OrderController@getOrder'); 
    Route::post('/post-feedback', 'SuggestionController@postFeedBack'); 
-
-   Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); 
-
-
-
-   
 
 
 

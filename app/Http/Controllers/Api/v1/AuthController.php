@@ -59,7 +59,6 @@ class AuthController extends Controller
 
     public function loginAdmin(Request $request)
     {
-       
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -68,10 +67,9 @@ class AuthController extends Controller
         $admin = Admin::where('email', $request->email)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
-            return "The provided credentials are incorrect.";
-            // throw ValidationException::withMessages([
-            //     'email' => ['The provided credentials are incorrect.'],
-            // ]);
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
         }
 
         return response()->json(['token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);

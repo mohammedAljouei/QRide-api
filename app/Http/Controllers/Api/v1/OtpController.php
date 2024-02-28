@@ -2,12 +2,10 @@
 
 
 namespace App\Http\Controllers\Api\v1;
-
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\Controller; 
 
 
 use Illuminate\Http\Request;
-
 // use Illuminate\Support\Facades\Cache; // For caching the OTP temporarily
 
 
@@ -24,16 +22,16 @@ class OtpController extends Controller
 
         // $basic  = new \Vonage\Client\Credentials\Basic("a11f4fbd", "6Xhsdmj2G3eCKT0S");
         // $client = new \Vonage\Client(new \Vonage\Client\Credentials\Container($basic));
-
-        $basic = new \Vonage\Client\Credentials\Basic("3ee777d8", "IfanB1ZlVmPX2Qwl");
+        
+        $basic  = new \Vonage\Client\Credentials\Basic("3ee777d8", "IfanB1ZlVmPX2Qwl");
         $client = new \Vonage\Client(new \Vonage\Client\Credentials\Container($basic));
 
         $request = new \Vonage\Verify\Request($phone, "Vonage");
         $response = $client->verify()->start($request);
 
         // echo "Started verification, `request_id` is " . $response->getRequestId();
-
-        return response()->json(['requestId' => $response->getRequestId()]);
+      
+        return response()->json(['requestId' =>  $response->getRequestId()]);
     }
 
 
@@ -50,16 +48,15 @@ class OtpController extends Controller
 
         // $basic  = new \Vonage\Client\Credentials\Basic("a11f4fbd", "6Xhsdmj2G3eCKT0S");
         // $client = new \Vonage\Client(new \Vonage\Client\Credentials\Container($basic));
-
-
-        $basic = new \Vonage\Client\Credentials\Basic("3ee777d8", "IfanB1ZlVmPX2Qwl");
+        
+                $basic  = new \Vonage\Client\Credentials\Basic("3ee777d8", "IfanB1ZlVmPX2Qwl");
         $client = new \Vonage\Client(new \Vonage\Client\Credentials\Container($basic));
 
         $result = $client->verify()->check($requestId, $code);
 
         $result_text = $result->getResponseData();
-
-        return response()->json(['result' => $result_text]);
+      
+        return response()->json(['result' =>  $result_text]);
     }
 
 

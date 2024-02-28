@@ -11,11 +11,8 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-
-
-
-
-    public function getOrder($orderId)
+    
+     public function getOrder($orderId)
     {
         // Fetch the order by ID
         $order = Order::find($orderId);
@@ -100,8 +97,7 @@ class OrderController extends Controller
         // Return a JSON response with the generated order ID
         return response()->json(['orderId' => $order->id]);
     }
-
-
+    
     /**
      * Display a listing of the resource.
      */
