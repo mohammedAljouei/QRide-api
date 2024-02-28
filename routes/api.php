@@ -41,7 +41,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::apiResource('meals' , MealController::class); 
    Route::apiResource('orders' , OrderController::class); 
    Route::get('/menu/{menu}', 'MenuController@getMenu'); // added by mohammed 
-   Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); // added by mohammed 
+   Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); // added by mohammed
+   Route::get('/menu/{menu}/shop-info', 'MenuController@getShopInfoMenu'); // added by mohammed
+   
 
    Route::post('/generate-otp', 'OtpController@generateOTP');
    Route::post('/verify-otp',  'OtpController@verifyOTP');

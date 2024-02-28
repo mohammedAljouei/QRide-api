@@ -29,6 +29,9 @@ class StoreMenuRequest extends FormRequest
             'version' => 'nullable', // version is not required and can be null
             'status' => 'nullable',  // status is not required and can be null
             'payment_methods' => 'nullable',  // status is not required and can be null
+            'color' => 'nullable', 
+            'name' => 'nullable',  
+
             // Add other validation rules as needed
         ];
     }

@@ -16,6 +16,17 @@ class MenuController extends Controller
 
     // newly added by mohammed 
     
+
+
+  public function getShopInfoMenu($menuId)
+  {
+      $menu = Menu::find($menuId);
+      $color = $menu->color;
+      $name = $menu->name;
+
+  
+      return response()->json(['color' => $color ,'name'=> $name]);
+  }
     
     
   public function getPaymentMenu($menuId)
