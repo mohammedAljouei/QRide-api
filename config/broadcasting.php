@@ -32,9 +32,9 @@ return [
 
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('39f265630f5552120868'),
-            'secret' => env('5638842a70e7d309ada3'),
-            'app_id' => env('1752031'),
+            'key' => '39f265630f5552120868',
+            'secret' => '5638842a70e7d309ada3',
+            'app_id' => '1752031',
             'options' => [
                 'cluster' => env('ap2'),
                 'host' => env('PUSHER_HOST') ?: 'api-'.env('PUSHER_APP_CLUSTER', 'mt1').'.pusher.com',

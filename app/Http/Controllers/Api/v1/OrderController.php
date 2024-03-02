@@ -98,7 +98,7 @@ class OrderController  extends Controller
         // Create the order in the database
         $order = Order::create($orderData);
 
-        event(new PusherBrodcast($order->id));
+        event(new PusherBrodcast("test"));
 
 
         // Return a JSON response with the generated order ID
