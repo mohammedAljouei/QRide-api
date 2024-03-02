@@ -8,11 +8,15 @@ use App\Models\Order;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use App\Events\PusherBrodcast;
 
-class OrderController extends Controller
+class OrderController  extends Controller 
 {
-    
-     public function getOrder($orderId)
+
+
+   
+
+    public function getOrder($orderId)
     {
         // Fetch the order by ID
         $order = Order::find($orderId);
@@ -94,10 +98,14 @@ class OrderController extends Controller
         // Create the order in the database
         $order = Order::create($orderData);
 
+        event(new PusherBrodcast($order->id));
+
+
         // Return a JSON response with the generated order ID
         return response()->json(['orderId' => $order->id]);
     }
-    
+
+
     /**
      * Display a listing of the resource.
      */
