@@ -76,6 +76,8 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 
     Route::get('/orders/{order}', 'OrderController@getOrder'); 
     Route::post('/orders/filter/{menuId}', 'OrderController@filterOrders');
+    Route::post('/orders/status/{orderId}', 'OrderController@updateStatus');
+
 
 
     // Inside routes/api.php or routes/web.php

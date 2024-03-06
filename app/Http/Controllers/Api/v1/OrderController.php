@@ -9,10 +9,35 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Events\MyEvent;
+use Illuminate\Validation\Rule;
+
 
 class OrderController extends Controller
 {
 
+    public function updateStatus(Request $request, $orderId)
+    {
+        // Define the allowed statuses in uppercase
+        $allowedStatuses = ['NEW', 'ACCEPTED', 'REJECTED', 'TIMEOUT', 'DONE'];
+
+        // Validate the request
+        $request->validate([
+            'status' => ['required', 'string', Rule::in($allowedStatuses)],
+        ]);
+
+        // Check if the status is in uppercase
+        if ($request->status !== $request->status) {
+            return response()->json(['error' => 'Status must be uppercase.'], 422);
+        }
+
+        // Find the order by ID
+        $order = Order::findOrFail($orderId);
+
+        $order->status = $request->status;
+        $order->save();
+
+        return response()->json(['message' => 'Order status updated successfully']);
+    }
 
     public function filterOrders(Request $request, $menuId)
     {
