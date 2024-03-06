@@ -48,7 +48,6 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::post('/generate-otp', 'OtpController@generateOTP');
    Route::post('/verify-otp',  'OtpController@verifyOTP');
    Route::post('/place-order', 'OrderController@placeOrder'); 
-   Route::get('/orders/{order}', 'OrderController@getOrder'); 
    Route::post('/post-feedback', 'SuggestionController@postFeedBack'); 
 
 
@@ -73,6 +72,10 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 
     Route::apiResource('sections' , SectionController::class); 
     Route::get('sections/shop/{menu}', [SectionController::class, 'byMenu']);
+
+
+    Route::get('/orders/{order}', 'OrderController@getOrder'); 
+
     // Inside routes/api.php or routes/web.php
    
 

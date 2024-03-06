@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PusherBrodcast implements ShouldBroadcast
+class MyEvent implements ShouldBroadcast
 {
   use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -24,5 +24,10 @@ class PusherBrodcast implements ShouldBroadcast
   public function broadcastOn()
   {
       return ['my-channel'];
+  }
+
+  public function broadcastAs()
+  {
+      return 'my-event';
   }
 }

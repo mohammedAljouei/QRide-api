@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use App\Events\PusherBrodcast;
+use App\Events\MyEvent;
 
 class OrderController  extends Controller 
 {
@@ -98,7 +98,7 @@ class OrderController  extends Controller
         // Create the order in the database
         $order = Order::create($orderData);
 
-        event(new PusherBrodcast("test"));
+        event(new MyEvent($order->id));
 
 
         // Return a JSON response with the generated order ID
