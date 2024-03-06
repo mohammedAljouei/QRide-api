@@ -10,11 +10,49 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Events\MyEvent;
 
-class OrderController  extends Controller 
+class OrderController extends Controller
 {
 
 
-   
+    public function filterOrders(Request $request, $menuId)
+    {
+        $query = Order::query();
+
+        // Filter by menu ID from the URL parameter
+        $query->where('menu_id', $menuId);
+
+        // Add status filters if any of them is set to true
+        $statuses = [];
+        if ($request->input('NEW', false)) {
+            $statuses[] = 'new';
+        }
+        if ($request->input('ACCEPTED', false)) {
+            $statuses[] = 'accepted';
+        }
+        if ($request->input('REJECTED', false)) {
+            $statuses[] = 'rejected';
+        }
+        if ($request->input('TIMEOUT', false)) {
+            $statuses[] = 'timeout';
+        }
+        if ($request->input('DONE', false)) {
+            $statuses[] = 'done'; // Add the 'done' status to your filter
+        }
+
+
+        $query->whereIn('status', $statuses);
+
+
+        $orders = $query->get();
+
+        // Decode the order_info JSON string for each order
+        $orders->transform(function ($order) {
+            $order->order_info = json_decode($order->order_info, true);
+            return $order;
+        });
+
+        return response()->json($orders);
+    }
 
     public function getOrder($orderId)
     {
