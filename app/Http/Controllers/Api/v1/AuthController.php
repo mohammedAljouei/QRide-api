@@ -31,7 +31,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json(['token' => $qrideAdmin->createToken('authToken',  ['qrideAdmin'])->plainTextToken]);
+        return response()->json(['id'=> $qrideAdmin->id, 'token' => $qrideAdmin->createToken('authToken',  ['qrideAdmin'])->plainTextToken]);
     }
 
 
@@ -72,7 +72,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json(['token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);
+        return response()->json([ 'id'=> $admin->id,'token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);
     }
 
     /**

@@ -8,47 +8,76 @@ use App\Http\Requests\UpdateMenuRequest;
 use App\Models\Menu;
 use App\Models\Section;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 
 class MenuController extends Controller
 {
 
 
     // newly added by mohammed 
-    
 
 
-  public function getShopInfoMenu($menuId)
-  {
-      $menu = Menu::find($menuId);
-      $color = $menu->color;
-      $name = $menu->name;
 
-  
-      return response()->json(['color' => $color ,'name'=> $name]);
-  }
-    
-    
-  public function getPaymentMenu($menuId)
+    public function getShopInfoMenu($menuId)
+    {
+        $menu = Menu::find($menuId);
+        $color = $menu->color;
+        $name = $menu->name;
+
+
+        return response()->json(['color' => $color, 'name' => $name]);
+    }
+
+    public function getMenuIdByAdminId($adminId)
+    {
+        // Use 'where' to query based on the foreign key 'adminId'
+        $menu = Menu::where('admin_id', $adminId)->first(); // Assuming 'admin_id' is the column name in your 'menus' table
+
+        // Check if a Menu was found
+        if ($menu) {
+            return response()->json(['menuId' => $menu->id]);
+        } else {
+            // Handle the case where no Menu is found for the provided adminId
+            return response()->json(['error' => 'Menu not found'], 404);
+        }
+    }
+
+    public function getMenuIdBySuperAdminId($superAdminId)
+    {
+        // Use 'where' to query based on the foreign key 'adminId'
+        $menu = Menu::where('super_admin_id', $superAdminId)->first(); // Assuming 'admin_id' is the column name in your 'menus' table
+
+        // Check if a Menu was found
+        if ($menu) {
+            return response()->json(['menuId' => $menu->id]);
+        } else {
+            // Handle the case where no Menu is found for the provided adminId
+            return response()->json(['error' => 'Menu not found'], 404);
+        }
+    }
+
+
+
+    public function getPaymentMenu($menuId)
     {
         $menu = Menu::find($menuId);
         $paymentMethods = $menu->payment_methods;
 
-    
+
         return response()->json(['paymentMethods' => $paymentMethods]);
     }
-    
+
 
     public function getMenu($menuId)
     {
         $menu = Menu::with(['sections.meals.addOnTitles.addOnInfos'])
-                    ->where('id', $menuId)
-                    ->first();
-    
+            ->where('id', $menuId)
+            ->first();
+
         if (!$menu) {
             return response()->json(['error' => 'Menu not found'], 404);
         }
-    
+
         $transformedMenu = [
             'menuId' => $menu->id,
             'sections' => $menu->sections ? $menu->sections->map(function ($section) {
@@ -66,9 +95,9 @@ class MenuController extends Controller
                             // Include other meal fields here...
                             'addOns' => $meal->addOnTitles ? $meal->addOnTitles->map(function ($addOnTitle) {
                                 return [
-                                    'title' => $addOnTitle->title, 
+                                    'title' => $addOnTitle->title,
                                     'min' => $addOnTitle->min,
-                                    'max' => $addOnTitle->max, 
+                                    'max' => $addOnTitle->max,
                                     'addOnsItems' => $addOnTitle->addOnInfos ? $addOnTitle->addOnInfos->map(function ($addOnInfo) {
                                         return [
                                             'addOnName' => $addOnInfo->name, // Replace with actual field name in AddOnInfo
@@ -82,11 +111,11 @@ class MenuController extends Controller
                 ];
             }) : []
         ];
-    
+
         return response()->json(['menu' => $transformedMenu]);
     }
-    
-// end func added by mohammed
+
+    // end func added by mohammed
     /**
      * Display a listing of the resource.
      */
@@ -118,13 +147,13 @@ class MenuController extends Controller
         //
 
         $menu = Menu::create($request->validated());
-        return response()->json($menu, 201);    
+        return response()->json($menu, 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Menu $shop ,  Request $request)
+    public function show(Menu $shop, Request $request)
     {
         //
 
