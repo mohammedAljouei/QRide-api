@@ -9,6 +9,18 @@ class AddOnTitle extends Model
 {
     use HasFactory;
 
+
+    protected $fillable = [
+        'meal_id',
+        'title',
+        'min',
+        'max',
+
+    
+        // other attributes...
+    ];
+
+
     public function meal() {
         return $this->belongsTo(Meal::class);
     }

@@ -6,9 +6,21 @@ use App\Http\Requests\StoreAddOnInfoRequest;
 use App\Http\Requests\UpdateAddOnInfoRequest;
 use App\Models\AddOnInfo;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request; 
 
 class AddOnInfoController extends Controller
 {
+
+    public function byMenu(Request $request, $add_on_title_id)
+    {
+
+        $user = $request->user();
+        if (!$user || !$user->tokenCan('superAdmin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $addOnTitles = AddOnInfo::where('add_on_title_id', $add_on_title_id)->get();
+        return response()->json($addOnTitles);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -31,6 +43,8 @@ class AddOnInfoController extends Controller
     public function store(StoreAddOnInfoRequest $request)
     {
         //
+        $addOnInfos = AddOnInfo::create($request->validated());
+        return response()->json($addOnInfos, 201);   
     }
 
     /**

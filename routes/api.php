@@ -1,11 +1,16 @@
 <?php
 
+use App\Http\Controllers\Api\v1\AddOnInfoController;
+use App\Http\Controllers\Api\v1\AddOnTitleController;
+use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\OtpController;
 
 use App\Http\Controllers\Api\v1\SectionController;
+use App\Http\Controllers\Api\v1\MealController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -67,11 +72,22 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
     Route::apiResource('super-admins' , SuperAdminController::class); 
     Route::get('/super-admins/{superAdmin}', 'SuperAdminController@show');
 
+
+
     Route::apiResource('shops' , MenuController::class); 
     Route::get('/shops/{shop}', 'MenuController@show');
 
+    // start super admin
     Route::apiResource('sections' , SectionController::class); 
     Route::get('sections/shop/{menu}', [SectionController::class, 'byMenu']);
+    Route::apiResource('meals' , MealController::class); 
+    Route::get('meals/section/{secation}', [MealController::class, 'byMenu']);
+    Route::apiResource('add-on-titles' , AddOnTitleController::class); 
+    Route::get('add-on-titles/meal/{mealId}', [AddOnTitleController::class, 'byMenu']);
+    Route::apiResource('add-on-infos' , AddOnInfoController::class); 
+    Route::get('add-on-infos/add-on-title/{addOnTitle}', [AddOnInfoController::class, 'byMenu']);
+
+   // end super admin
 
 
     Route::get('/orders/{order}', 'OrderController@getOrder'); 

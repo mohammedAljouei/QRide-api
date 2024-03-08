@@ -11,8 +11,11 @@ class StoreMealRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        $user = $this->user();
+
+        return $user != null && $user->tokenCan('superAdmin');
     }
+
 
     /**
      * Get the validation rules that apply to the request.
@@ -22,7 +25,14 @@ class StoreMealRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'section_id' => 'required',
+            'description' => '',
+            'status' => '',
+            'image_path' => '',
+            'price' => '',
+            'name' => 'required',
+            'sort' => 'required', // version is not required and can be null
+            // Add other validation rules as needed
         ];
     }
 }

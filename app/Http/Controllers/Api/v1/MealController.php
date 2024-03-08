@@ -6,6 +6,7 @@ use App\Http\Requests\StoreMealRequest;
 use App\Http\Requests\UpdateMealRequest;
 use App\Models\Meal;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request; 
 
 class MealController extends Controller
 {
@@ -15,6 +16,19 @@ class MealController extends Controller
     public function index()
     {
         //
+    }
+
+
+
+    public function byMenu(Request $request, $secationId)
+    {
+
+        $user = $request->user();
+        if (!$user || !$user->tokenCan('superAdmin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $meals = Meal::where('section_id', $secationId)->get();
+        return response()->json($meals);
     }
 
     /**
@@ -31,6 +45,8 @@ class MealController extends Controller
     public function store(StoreMealRequest $request)
     {
         //
+        $meal = Meal::create($request->validated());
+        return response()->json($meal, 201);   
     }
 
     /**

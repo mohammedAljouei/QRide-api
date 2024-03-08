@@ -15,16 +15,16 @@ class SectionController extends Controller
      */
 
 
-     public function byMenu(Request $request ,$menuId)
-{
+    public function byMenu(Request $request, $menuId)
+    {
 
-             $user = $request->user();
-         if (!$user || !$user->tokenCan('superAdmin')) {
-             return response()->json(['message' => 'Unauthorized'], 403);
-         }
-    $sections = Section::where('menu_id', $menuId)->get();
-    return response()->json($sections);
-}
+        $user = $request->user();
+        if (!$user || !$user->tokenCan('superAdmin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $sections = Section::where('menu_id', $menuId)->get();
+        return response()->json($sections);
+    }
 
 
     // public function index(Request $request)

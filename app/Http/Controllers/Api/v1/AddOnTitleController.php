@@ -6,9 +6,23 @@ use App\Http\Requests\StoreAddOnTitleRequest;
 use App\Http\Requests\UpdateAddOnTitleRequest;
 use App\Models\AddOnTitle;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request; 
+
 
 class AddOnTitleController extends Controller
 {
+
+    public function byMenu(Request $request, $meal_id)
+    {
+
+        $user = $request->user();
+        if (!$user || !$user->tokenCan('superAdmin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $addOnTitles = AddOnTitle::where('meal_id', $meal_id)->get();
+        return response()->json($addOnTitles);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -31,6 +45,8 @@ class AddOnTitleController extends Controller
     public function store(StoreAddOnTitleRequest $request)
     {
         //
+        $addOnTitles = AddOnTitle::create($request->validated());
+        return response()->json($addOnTitles, 201);   
     }
 
     /**
