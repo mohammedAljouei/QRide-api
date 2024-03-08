@@ -53,7 +53,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json(['token' => $superAdmin->createToken('authToken',  ['superAdmin'])->plainTextToken]);
+        return response()->json([ 'id'=> $superAdmin->id,'token' => $superAdmin->createToken('authToken',  ['superAdmin'])->plainTextToken]);
     }
 
 
