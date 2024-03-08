@@ -85,7 +85,7 @@ class AuthController extends Controller
             ]);
         }
 
-        $menu = Menu::where('admin_id', $$admin->id)->first();
+        $menu = Menu::where('admin_id', $admin->id)->first();
 
         if ($menu) {
             return response()->json([ 'menuId'=> $menu->id,'token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);
