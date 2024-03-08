@@ -8,6 +8,7 @@ use App\Models\SuperAdmin;
 use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Validation\ValidationException; 
+use App\Models\Menu;
 
 class AuthController extends Controller
 {
@@ -53,7 +54,19 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json([ 'id'=> $superAdmin->id,'token' => $superAdmin->createToken('authToken',  ['superAdmin'])->plainTextToken]);
+
+
+        $menu = Menu::where('super_admin_id', $superAdmin->id)->first();
+
+        if ($menu) {
+            return response()->json([ 'menuId'=> $menu->id,'token' => $superAdmin->createToken('authToken',  ['superAdmin'])->plainTextToken]);
+            
+        } else {
+            // Handle the case where no Menu is found for the provided adminId
+            return response()->json(['error' => 'Please Create Shop for this super admin first'], 404);
+        }
+
+
     }
 
 
@@ -72,7 +85,17 @@ class AuthController extends Controller
             ]);
         }
 
-        return response()->json([ 'id'=> $admin->id,'token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);
+        $menu = Menu::where('admin_id', $$admin->id)->first();
+
+        if ($menu) {
+            return response()->json([ 'menuId'=> $menu->id,'token' => $admin->createToken('authToken',  ['admin'])->plainTextToken]);
+            
+        } else {
+            // Handle the case where no Menu is found for the provided adminId
+            return response()->json(['error' => 'Please Create Shop for this admin first'], 404);
+        }
+
+       
     }
 
     /**
