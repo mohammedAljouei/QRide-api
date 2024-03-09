@@ -161,7 +161,7 @@ class OrderController extends Controller
         // Create the order in the database
         $order = Order::create($orderData);
 
-        event(new MyEvent($order->id));
+        event(new MyEvent($order->menu_id));
 
 
         // Return a JSON response with the generated order ID
