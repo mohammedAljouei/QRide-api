@@ -79,5 +79,10 @@ class AddOnTitleController extends Controller
     public function destroy(AddOnTitle $addOnTitle)
     {
         //
+
+        $addOnTitle->delete();
+
+        // Return a HTTP 200 response with a success message
+        return response()->json(['message' => 'addOnTitle deleted successfully']);
     }
 }

@@ -90,6 +90,12 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
     Route::apiResource('add-on-infos' , AddOnInfoController::class); 
     Route::get('add-on-infos/add-on-title/{addOnTitle}', [AddOnInfoController::class, 'byMenu']);
 
+    Route::delete('/section/{section}', 'SectionController@destroy');
+    Route::delete('/meal/{meal}', 'MealController@destroy');
+    Route::delete('/add-on-title/{addOnTitle}', 'AddOnTitleController@destroy');
+    Route::delete('/add-on-info/{addOnInfo}', 'AddOnInfoController@destroy');
+
+
    // end super admin
 
 

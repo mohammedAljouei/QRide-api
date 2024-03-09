@@ -6,7 +6,7 @@ use App\Http\Requests\StoreSectionRequest;
 use App\Http\Requests\UpdateSectionRequest;
 use App\Models\Section;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 
 class SectionController extends Controller
 {
@@ -33,20 +33,20 @@ class SectionController extends Controller
     //     if (!$user || !$user->tokenCan('superAdmin')) {
     //         return response()->json(['message' => 'Unauthorized'], 403);
     //     }
-    
+
     //     // Assuming you want to filter by 'menu_id' which is passed as a query parameter.
     //     $menuId = $request->query('menu_id');
-    
+
     //     if ($menuId) {
     //         $sections = Section::where('menu_id', $menuId)->get();
     //     } else {
     //         // If no specific filter is provided, you may want to limit the results or sort them
     //         $sections = Section::all(); // or use ->limit(10)->get() for example
     //     }
-    
+
     //     return response()->json($sections);
     // }
-    
+
     /**
      * Show the form for creating a new resource.
      */
@@ -61,7 +61,7 @@ class SectionController extends Controller
     public function store(StoreSectionRequest $request)
     {
         $section = Section::create($request->validated());
-        return response()->json($section, 201);   
+        return response()->json($section, 201);
     }
 
     /**
@@ -94,5 +94,9 @@ class SectionController extends Controller
     public function destroy(Section $section)
     {
         //
+        $section->delete();
+
+        // Return a HTTP 200 response with a success message
+        return response()->json(['message' => 'Section deleted successfully']);
     }
 }

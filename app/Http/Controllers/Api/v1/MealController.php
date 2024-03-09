@@ -79,5 +79,9 @@ class MealController extends Controller
     public function destroy(Meal $meal)
     {
         //
+        $meal->delete();
+
+        // Return a HTTP 200 response with a success message
+        return response()->json(['message' => 'meal deleted successfully']);
     }
 }

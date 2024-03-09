@@ -77,5 +77,10 @@ class AddOnInfoController extends Controller
     public function destroy(AddOnInfo $addOnInfo)
     {
         //
+
+        $addOnInfo->delete();
+
+        // Return a HTTP 200 response with a success message
+        return response()->json(['message' => 'addOnInfo deleted successfully']);
     }
 }
