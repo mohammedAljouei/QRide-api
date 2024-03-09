@@ -24,7 +24,7 @@ class MyEvent implements ShouldBroadcast
     public function broadcastOn()
     {
         // Define an array of channel names you want to broadcast to
-        $channels = [8, 2, 1];
+        $channels = ['8', '2', '1'];
 
         // Map each channel name to a Channel object
         return collect($channels)->map(function ($channel) {
