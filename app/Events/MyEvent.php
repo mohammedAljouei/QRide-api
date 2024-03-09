@@ -30,7 +30,7 @@ class MyEvent implements ShouldBroadcast
         // return collect($channels)->map(function ($channel) {
         //     return new Channel($channel);
         // });
-          return ['my-channel'];
+          return ['my-channel', 8];
     }
 
     public function broadcastAs()
