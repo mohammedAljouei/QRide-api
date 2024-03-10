@@ -35,7 +35,7 @@ class MealController extends Controller
     public function byMenuId(Request $request, $menuId)
     {
         $user = $request->user();
-        if (!$user || !$user->tokenCan('admin') || !$user->tokenCan('superAdmin')) {
+        if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
     
