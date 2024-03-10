@@ -31,6 +31,23 @@ class MealController extends Controller
         return response()->json($meals);
     }
 
+
+    public function byMenuId(Request $request, $menuId)
+    {
+        $user = $request->user();
+        if (!$user || !$user->tokenCan('admin') || !$user->tokenCan('superAdmin')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+    
+        // Query meals based on section's menu_id
+        $meals = Meal::whereHas('section', function ($query) use ($menuId) {
+            $query->where('menu_id', $menuId);
+        })->get();
+    
+        return response()->json($meals);
+    }
+    
+
     /**
      * Show the form for creating a new resource.
      */
