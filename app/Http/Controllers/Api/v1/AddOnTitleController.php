@@ -23,6 +23,23 @@ class AddOnTitleController extends Controller
         return response()->json($addOnTitles);
     }
 
+    public function byMenuId(Request $request, $menuId)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+    
+        // Query AddOnTitles based on meal's section's menu_id
+        $addOnTitles = AddOnTitle::whereHas('meal.section', function ($query) use ($menuId) {
+            $query->where('menu_id', $menuId);
+        })->get();
+    
+        return response()->json($addOnTitles);
+    }
+    
+    
+
     /**
      * Display a listing of the resource.
      */

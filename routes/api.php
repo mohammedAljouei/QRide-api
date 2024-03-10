@@ -100,6 +100,8 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 
 
    Route::get('meals/shop/{menu}', [MealController::class, 'byMenuId']);
+   Route::get('add-on-titles/shop/{menu}', [AddOnTitleController::class, 'byMenuId']);
+   Route::get('add-on-infos/shop/{menu}', [AddOnInfoController::class, 'byMenuId']);
 
 
 

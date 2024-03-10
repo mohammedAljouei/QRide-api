@@ -6,7 +6,7 @@ use App\Http\Requests\StoreAddOnInfoRequest;
 use App\Http\Requests\UpdateAddOnInfoRequest;
 use App\Models\AddOnInfo;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 
 class AddOnInfoController extends Controller
 {
@@ -21,6 +21,23 @@ class AddOnInfoController extends Controller
         $addOnTitles = AddOnInfo::where('add_on_title_id', $add_on_title_id)->get();
         return response()->json($addOnTitles);
     }
+
+
+    public function byMenuId(Request $request, $menuId)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Query AddOnInfos based on their title's meal's section's menu_id
+        $addOnInfos = AddOnInfo::whereHas('addOnTitle.meal.section', function ($query) use ($menuId) {
+            $query->where('menu_id', $menuId);
+        })->get();
+
+        return response()->json($addOnInfos);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -44,7 +61,7 @@ class AddOnInfoController extends Controller
     {
         //
         $addOnInfos = AddOnInfo::create($request->validated());
-        return response()->json($addOnInfos, 201);   
+        return response()->json($addOnInfos, 201);
     }
 
     /**
