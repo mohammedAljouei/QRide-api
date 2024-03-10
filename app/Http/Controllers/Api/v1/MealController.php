@@ -28,7 +28,7 @@ class MealController extends Controller
 
         // Validate the request
         $request->validate([
-            'status' => ['required', 'string', Rule::in($allowedStatuses)],
+            'status' => ['required', Rule::in($allowedStatuses)],
         ]);
 
         // Check if the status is in uppercase
