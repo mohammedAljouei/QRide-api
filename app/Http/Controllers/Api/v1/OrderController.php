@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
+use App\Models\Meal;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
@@ -116,22 +118,20 @@ class OrderController extends Controller
     }
 
 
-
     public function placeOrder(Request $request)
     {
         // Validate the incoming request data
         $validator = Validator::make($request->all(), [
             'menuId' => 'required|integer',
-            'note' => 'string',
+            'note' => 'nullable|string',
             'carInfo.carSize' => 'required|in:small,mid,large',
             'carInfo.carColor' => 'required|string',
             'userInfo.phone' => 'required|string',
             'orderInfo' => 'required|array',
             'orderInfo.meals' => 'required|array',
             'paymentInfo.paymentMethod' => 'required|in:applePay,cash,machine',
-            'paymentInfo.paymentId' => 'string',
+            'paymentInfo.paymentId' => 'nullable|string',
             'paymentInfo.totalPrice' => 'required|numeric',
-
             // Add more validation rules as necessary
         ]);
 
@@ -143,30 +143,95 @@ class OrderController extends Controller
         // Extract validated data
         $validatedData = $validator->validated();
 
+        // Add the MealImagePath for each meal
+        foreach ($validatedData['orderInfo']['meals'] as &$meal) {
+            $meal['MealImagePath'] = $this->getMealImagePath($meal['mealId']);
+        }
+        unset($meal); // Break the reference with the last element
+
         // Prepare the data for insertion
         $orderData = [
             'menu_id' => $validatedData['menuId'],
-            'order_info' => json_encode($validatedData['orderInfo']), // Convert order info to JSON string
+            'order_info' => json_encode($validatedData['orderInfo']), // orderInfo now includes MealImagePath
             'car_color' => $validatedData['carInfo']['carColor'],
             'phone' => $validatedData['userInfo']['phone'],
             'car_size' => $validatedData['carInfo']['carSize'],
             'payment_method' => $validatedData['paymentInfo']['paymentMethod'],
-            'payment_id' => $validatedData['paymentInfo']['paymentId'] ?? null, // Optional field
+            'payment_id' => $validatedData['paymentInfo']['paymentId'] ?? null,
             'total_price' => $validatedData['paymentInfo']['totalPrice'],
-            'note' => $validatedData['note'] ?? null, // Set the note field, default to null if not provided
-            'status' => 'NEW',
-            // 'status' should be set according to your application's logic
+            'note' => $validatedData['note'] ?? null,
+            'status' => 'NEW', // Adjust according to your application logic
         ];
 
         // Create the order in the database
         $order = Order::create($orderData);
 
-        event(new MyEvent($order->menu_id));
-
+        // Trigger any relevant events after order creation
+         event(new MyEvent($order->menu_id));
 
         // Return a JSON response with the generated order ID
         return response()->json(['orderId' => $order->id]);
     }
+
+    // Helper function to fetch the meal's image path based on mealId
+    protected function getMealImagePath($mealId)
+    {
+        $meal = Meal::find($mealId); // Assuming Meal is your Eloquent model for the meals table
+
+        // Return the image path if the meal is found, else return a default image path
+        return $meal ? $meal->image_path : 'default_image_path.jpg';
+    }
+
+    // public function placeOrder(Request $request)
+    // {
+    //     // Validate the incoming request data
+    //     $validator = Validator::make($request->all(), [
+    //         'menuId' => 'required|integer',
+    //         'note' => 'string',
+    //         'carInfo.carSize' => 'required|in:small,mid,large',
+    //         'carInfo.carColor' => 'required|string',
+    //         'userInfo.phone' => 'required|string',
+    //         'orderInfo' => 'required|array',
+    //         'orderInfo.meals' => 'required|array',
+    //         'paymentInfo.paymentMethod' => 'required|in:applePay,cash,machine',
+    //         'paymentInfo.paymentId' => 'string',
+    //         'paymentInfo.totalPrice' => 'required|numeric',
+
+    //         // Add more validation rules as necessary
+    //     ]);
+
+    //     // If validation fails, return a JSON response with errors
+    //     if ($validator->fails()) {
+    //         return response()->json(['errors' => $validator->errors()], 422);
+    //     }
+
+    //     // Extract validated data
+    //     $validatedData = $validator->validated();
+
+    //     // Prepare the data for insertion
+    //     $orderData = [
+    //         'menu_id' => $validatedData['menuId'],
+    //         'order_info' => json_encode($validatedData['orderInfo']), // Convert order info to JSON string
+    //         'car_color' => $validatedData['carInfo']['carColor'],
+    //         'phone' => $validatedData['userInfo']['phone'],
+    //         'car_size' => $validatedData['carInfo']['carSize'],
+    //         'payment_method' => $validatedData['paymentInfo']['paymentMethod'],
+    //         'payment_id' => $validatedData['paymentInfo']['paymentId'] ?? null, // Optional field
+    //         'total_price' => $validatedData['paymentInfo']['totalPrice'],
+    //         'note' => $validatedData['note'] ?? null, // Set the note field, default to null if not provided
+    //         'status' => 'NEW',
+    //         // 'status' should be set according to your application's logic
+    //     ];
+
+    //     // Create the order in the database
+    //     $order = Order::create($orderData);
+
+    //     event(new MyEvent($order->menu_id));
+
+
+    //     // Return a JSON response with the generated order ID
+    //     return response()->json(['orderId' => $order->id]);
+    // }
 
 
     /**
