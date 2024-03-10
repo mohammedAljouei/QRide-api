@@ -6,7 +6,9 @@ use App\Http\Requests\StoreMealRequest;
 use App\Http\Requests\UpdateMealRequest;
 use App\Models\Meal;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
 
 class MealController extends Controller
 {
@@ -16,6 +18,31 @@ class MealController extends Controller
     public function index()
     {
         //
+    }
+
+
+    public function updateStatus(Request $request, $mealId)
+    {
+        // Define the allowed statuses in uppercase
+        $allowedStatuses = [1,0];
+
+        // Validate the request
+        $request->validate([
+            'status' => ['required', 'string', Rule::in($allowedStatuses)],
+        ]);
+
+        // Check if the status is in uppercase
+        if ($request->status !== $request->status) {
+            return response()->json(['error' => 'Status must 1 or 0.'], 422);
+        }
+
+        // Find the order by ID
+        $meal = Meal::findOrFail($mealId);
+
+        $meal->status = $request->status;
+        $meal->save();
+
+        return response()->json(['message' => 'Meal status updated successfully']);
     }
 
 
@@ -38,15 +65,15 @@ class MealController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-    
+
         // Query meals based on section's menu_id
         $meals = Meal::whereHas('section', function ($query) use ($menuId) {
             $query->where('menu_id', $menuId);
         })->get();
-    
+
         return response()->json($meals);
     }
-    
+
 
     /**
      * Show the form for creating a new resource.
@@ -63,7 +90,7 @@ class MealController extends Controller
     {
         //
         $meal = Meal::create($request->validated());
-        return response()->json($meal, 201);   
+        return response()->json($meal, 201);
     }
 
     /**

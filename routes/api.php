@@ -109,6 +109,8 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
     Route::post('/orders/filter/{menuId}', 'OrderController@filterOrders');
     Route::post('/orders/status/{orderId}', 'OrderController@updateStatus');
 
+    Route::post('/meals/status/{mealId}', 'MealController@updateStatus');
+
 
 
     // Inside routes/api.php or routes/web.php
