@@ -143,9 +143,17 @@ class OrderController extends Controller
         // Extract validated data
         $validatedData = $validator->validated();
 
+
+        // // Add the MealName for each meal
+        // foreach ($validatedData['orderInfo']['meals'] as &$meal) {
+        //     $meal['MealName'] = $this->getMealName($meal['mealId']);
+        // }
+        // unset($meal); // Break the reference with the last element
+
         // Add the MealImagePath for each meal
         foreach ($validatedData['orderInfo']['meals'] as &$meal) {
             $meal['MealImagePath'] = $this->getMealImagePath($meal['mealId']);
+            $meal['MealName'] = $this->getMealName($meal['mealId']);
         }
         unset($meal); // Break the reference with the last element
 
@@ -171,6 +179,17 @@ class OrderController extends Controller
 
         // Return a JSON response with the generated order ID
         return response()->json(['orderId' => $order->id]);
+    }
+
+
+
+    // Helper function to fetch the meal's name based on mealId
+    protected function getMealName($mealId)
+    {
+        $meal = Meal::find($mealId); // Assuming Meal is your Eloquent model for the meals table
+
+        // Return the meal name if the meal is found, else return a default value or handle as needed
+        return $meal ? $meal->name : 'Unknown Meal';
     }
 
     // Helper function to fetch the meal's image path based on mealId
