@@ -152,8 +152,8 @@ class OrderController extends Controller
 
         // Add the MealImagePath for each meal
         foreach ($validatedData['orderInfo']['meals'] as &$meal) {
-            $meal['MealImagePath'] = $this->getMealImagePath($meal['mealId']);
-            $meal['MealName'] = $this->getMealName($meal['mealId']);
+            $meal['mealImagePath'] = $this->getMealImagePath($meal['mealId']);
+            $meal['mealName'] = $this->getMealName($meal['mealId']);
         }
         unset($meal); // Break the reference with the last element
 
