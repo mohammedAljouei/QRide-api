@@ -100,6 +100,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
     Route::delete('/add-on-info/{addOnInfo}', 'AddOnInfoController@destroy');
 
 
+    Route::post('/timeslots', [TimeslotController::class, 'store']);
+
+
    // end super admin
 
 
