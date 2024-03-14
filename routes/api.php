@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\v1\OtpController;
 
 use App\Http\Controllers\Api\v1\SectionController;
 use App\Http\Controllers\Api\v1\MealController;
-
+use App\Http\Controllers\Api\v1\TimeslotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +65,10 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::apiResource('shop-uis' , ShopUIController::class); 
    Route::apiResource('suggestions' , SuggestionController::class); 
 //    Route::apiResource('store-menu' , StoreMenuController::class); 
+
+
+   Route::post('/timeslots', [TimeslotController::class, 'store']);
+
 });
 
 
