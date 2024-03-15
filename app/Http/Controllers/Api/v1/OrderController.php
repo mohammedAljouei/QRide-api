@@ -68,6 +68,9 @@ class OrderController extends Controller
 
 
         $query->whereIn('status', $statuses);
+        
+        // Order by 'created_at' in descending order
+        $query->orderBy('created_at', 'desc');
 
 
         $orders = $query->get();
