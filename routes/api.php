@@ -66,8 +66,11 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::apiResource('suggestions' , SuggestionController::class); 
 //    Route::apiResource('store-menu' , StoreMenuController::class); 
 
+   Route::get('/timeslots/{menuId}', [TimeslotController::class, 'show']);
+   Route::get('/timeslots/{menuId}/check', [TimeslotController::class, 'checkAvailability']);
 
-   Route::post('/timeslots', [TimeslotController::class, 'store']);
+
+
 
 });
 
