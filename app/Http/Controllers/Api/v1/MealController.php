@@ -23,27 +23,41 @@ class MealController extends Controller
 
     public function updateStatus(Request $request, $mealId)
     {
-        // Define the allowed statuses in uppercase
-        $allowedStatuses = [1,0];
-
-        // Validate the request
-        $request->validate([
-            'status' => ['required', Rule::in($allowedStatuses)],
-        ]);
-
-        // Check if the status is in uppercase
-        if ($request->status !== $request->status) {
-            return response()->json(['error' => 'Status must 1 or 0.'], 422);
-        }
-
-        // Find the order by ID
+        // Find the meal by ID
         $meal = Meal::findOrFail($mealId);
 
-        $meal->status = $request->status;
+        // Toggle the status
+        $meal->status = $meal->status == 1 ? 0 : 1;
         $meal->save();
 
         return response()->json(['message' => 'Meal status updated successfully']);
     }
+
+
+
+    // public function updateStatus(Request $request, $mealId)
+    // {
+    //     // Define the allowed statuses in uppercase
+    //     $allowedStatuses = [1,0];
+
+    //     // Validate the request
+    //     $request->validate([
+    //         'status' => ['required', Rule::in($allowedStatuses)],
+    //     ]);
+
+    //     // Check if the status is in uppercase
+    //     if ($request->status !== $request->status) {
+    //         return response()->json(['error' => 'Status must 1 or 0.'], 422);
+    //     }
+
+    //     // Find the order by ID
+    //     $meal = Meal::findOrFail($mealId);
+
+    //     $meal->status = $request->status;
+    //     $meal->save();
+
+    //     return response()->json(['message' => 'Meal status updated successfully']);
+    // }
 
 
 
