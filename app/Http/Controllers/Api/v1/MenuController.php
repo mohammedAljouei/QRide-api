@@ -23,9 +23,11 @@ class MenuController extends Controller
         $menu = Menu::find($menuId);
         $color = $menu->color;
         $name = $menu->name;
+        $slogan = $menu->slogan;
 
 
-        return response()->json(['color' => $color, 'name' => $name]);
+
+        return response()->json(['color' => $color, 'name' => $name, 'slogan' => $slogan]);
     }
 
     public function getMenuIdByAdminId($adminId)
