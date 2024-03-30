@@ -26,6 +26,7 @@ class Menu extends Model
         'payment_methods', // Make sure this is fillable if you're using create() method
         'color',
         'name',
+        'slogan'
         // Add other attributes as needed
     ];
 

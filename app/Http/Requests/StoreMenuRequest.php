@@ -31,6 +31,7 @@ class StoreMenuRequest extends FormRequest
             'payment_methods' => 'nullable',  // status is not required and can be null
             'color' => 'nullable', 
             'name' => 'nullable',  
+            'slogan' => 'nullable'
 
             // Add other validation rules as needed
         ];
