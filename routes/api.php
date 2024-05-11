@@ -50,6 +50,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::get('/menu/menuIdBySuperAdmin/{superAdminId}', 'MenuController@getMenuIdBySuperAdminId'); // added by mohammed 
    
    Route::get('/menu/{menu}/payment-methods', 'MenuController@getPaymentMenu'); // added by mohammed
+   Route::get('/menu/{menu}/social-platforms', 'MenuController@getSocialPlatformsByMenuId'); // added by mohammed
+
+   
    Route::get('/menu/{menu}/shop-info', 'MenuController@getShopInfoMenu'); // added by mohammed
    
 

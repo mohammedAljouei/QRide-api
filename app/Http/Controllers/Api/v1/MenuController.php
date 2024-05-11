@@ -17,6 +17,13 @@ class MenuController extends Controller
     // newly added by mohammed 
 
 
+    public function getSocialPlatformsByMenuId($menuId)
+    {
+        $menu = Menu::find($menuId);
+        $platforms = $menu->platforms;
+
+        return response()->json(['socialPlatforms' => $platforms]);
+    }
 
     public function getShopInfoMenu($menuId)
     {

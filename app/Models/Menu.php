@@ -24,6 +24,8 @@ class Menu extends Model
         'version',
         'status',
         'payment_methods', // Make sure this is fillable if you're using create() method
+        'platforms', // Make sure this is fillable if you're using create() method
+
         'color',
         'name',
         'slogan'
@@ -32,7 +34,11 @@ class Menu extends Model
 
     protected $casts = [
         'payment_methods' => 'array', // This will cast payment_methods to and from JSON
+        'platforms'  => 'array', // This will cast platforms to and from JSON
+
     ];
+
+  
 
     public function admin() {
         return $this->belongsTo(Admin::class);
