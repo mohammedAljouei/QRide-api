@@ -38,6 +38,8 @@ class OrderController extends Controller
         $order->status = $request->status;
         $order->save();
 
+        event(new MyEvent($order->orderId)); // newly added by Eng. Mohammed
+
         return response()->json(['message' => 'Order status updated successfully']);
     }
 
