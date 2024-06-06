@@ -42,6 +42,12 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 
 Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], function () {
+
+   Route::get('orders/noti/{menu}', [OrderController::class, 'getCheckinsByMenuId']);
+
+
+
+   
    Route::apiResource('add-on-infos' , AddOnInfoController::class); 
    Route::apiResource('add-on-titles' , AddOnTitleController::class); 
    Route::apiResource('meals' , MealController::class); 
@@ -120,7 +126,7 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
    // end super admin
 
 
-   Route::get('orders/noti/{menu}', [OrderController::class, 'getCheckinsByMenuId']);
+   
 
 
 
