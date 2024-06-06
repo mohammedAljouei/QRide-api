@@ -31,7 +31,8 @@ class OrderController extends Controller
 
 
         // Trigger any relevant events after order creation
-        event(new MyEvent($order->menu_id));
+        $idForNoti = $order->menu_id + "2";
+        event(new MyEvent($idForNoti));
 
         return response()->json(['message' => 'Noti created']);
     }
