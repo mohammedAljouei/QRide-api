@@ -11,6 +11,9 @@ class CustomerCheckin extends Model
 
     protected $fillable = ['order_id', 'checkin_time'];
 
+    // Disable timestamps
+    public $timestamps = false;
+
     public function order()
     {
         return $this->belongsTo(Order::class);
