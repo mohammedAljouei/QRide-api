@@ -122,6 +122,28 @@ class OrderController extends Controller
         return response()->json($response);
     }
 
+    public function getOrderStatus($orderId)
+    {
+        // Fetch the order by ID
+        $order = Order::find($orderId);
+
+        // If the order doesn't exist, return a not found response
+        if (!$order) {
+            return response()->json(['message' => 'Order not found'], 404);
+        }
+
+      
+
+        // Construct the response object
+        $response = [
+           
+            'status' => $order->status,
+        ];
+
+        // Return the order in JSON format
+        return response()->json($response);
+    }
+
 
     public function placeOrder(Request $request)
     {

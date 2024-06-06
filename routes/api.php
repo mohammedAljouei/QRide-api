@@ -71,6 +71,10 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
 
    Route::get('/timeslots/{menuId}', [TimeslotController::class, 'show']);
    Route::get('/timeslots/{menuId}/check', [TimeslotController::class, 'checkAvailability']);
+   Route::get('/orders/status/{orderId}', 'OrderController@getOrderStatus');
+
+
+   
 
 
 
