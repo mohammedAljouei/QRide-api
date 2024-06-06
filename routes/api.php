@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\AddOnInfoController;
 use App\Http\Controllers\Api\v1\AddOnTitleController;
+use App\Http\Controllers\Api\v1\OrderController;
 use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -119,7 +120,11 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
    // end super admin
 
 
-   Route::get('meals/shop/{menu}', [MealController::class, 'byMenuId']);
+   Route::get('orders/noti/{menu}', [OrderController::class, 'getCheckinsByMenuId']);
+
+
+
+   Route::get('meals/shop/{menu}', [MealController::class, 'byMenuId']);   
    Route::get('add-on-titles/shop/{menu}', [AddOnTitleController::class, 'byMenuId']);
    Route::get('add-on-infos/shop/{menu}', [AddOnInfoController::class, 'byMenuId']);
 
