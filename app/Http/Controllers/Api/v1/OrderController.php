@@ -34,7 +34,7 @@ class OrderController extends Controller
         $idForNoti = $order->menu_id + "2";
         event(new MyEvent($idForNoti));
 
-        return response()->json(['message' => 'Noti created']);
+        return response()->json(['message' => 'Noti created under event id: ' + $idForNoti]);
     }
 
 
