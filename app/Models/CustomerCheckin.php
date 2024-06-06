@@ -9,10 +9,10 @@ class CustomerCheckin extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['order_id', 'checkin_time'];
 
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
-
 }
