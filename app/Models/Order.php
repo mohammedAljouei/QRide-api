@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\CustomerCheckin;
+
+
+
+
 class Order extends Model
 {
     use HasFactory;
@@ -27,4 +32,11 @@ class Order extends Model
     public function menu() {
         return $this->belongsTo(Menu::class);
     }
+
+
+    public function checkins()
+    {
+        return $this->hasMany(CustomerCheckin::class);
+    }
+
 }

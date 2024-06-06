@@ -17,6 +17,37 @@ use Illuminate\Validation\Rule;
 class OrderController extends Controller
 {
 
+
+    public function setNotiByCustomer($orderId)
+    {
+       
+        // Find the order by ID
+        $order = Order::findOrFail($orderId);
+
+
+        $order->checkins()->create([
+            'checkin_time' => now() // or any specific timestamp
+        ]);
+
+        return response()->json(['message' => 'Noti created']);
+    }
+
+
+
+      // Get check-ins based on menu ID
+      public function getCheckinsByMenuId($menuId)
+      {
+          $checkins = Order::where('menu_id', $menuId)
+                           ->with('checkins')
+                           ->get()
+                           ->pluck('checkins')
+                           ->flatten();
+  
+          return response()->json($checkins);
+      }
+
+
+
     public function updateStatus(Request $request, $orderId)
     {
         // Define the allowed statuses in uppercase
@@ -38,7 +69,7 @@ class OrderController extends Controller
         $order->status = $request->status;
         $order->save();
 
-        event(new MyEvent($orderId)); // newly added by Eng. Mohammed, this through error and this code is on prod
+        event(new MyEvent($orderId)); // newly added by Eng. Mohammed
 
         return response()->json(['message' => 'Order status updated successfully']);
     }
