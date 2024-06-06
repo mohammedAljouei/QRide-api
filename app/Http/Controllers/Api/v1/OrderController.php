@@ -67,6 +67,14 @@ class OrderController extends Controller
         $order = Order::findOrFail($orderId);
 
         $order->status = $request->status;
+
+        if ($request->status == "DONE") {
+         
+            // Delete the associated check-ins
+            $order->checkins()->delete();
+
+        }
+
         $order->save();
 
         event(new MyEvent($orderId)); // newly added by Eng. Mohammed
