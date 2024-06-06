@@ -29,12 +29,11 @@ class OrderController extends Controller
             'checkin_time' => now() // or any specific timestamp
         ]);
 
-
         // Trigger any relevant events after order creation
-        $idForNoti = $order->menu_id + "2";
+        $idForNoti = $order->menu_id . "2";
         event(new MyEvent($idForNoti));
-
-        return response()->json(['message' => 'Noti created under event id: ' + $idForNoti]);
+        
+        return response()->json(['message' => 'Noti created under event id: ' . $idForNoti]);
     }
 
 
