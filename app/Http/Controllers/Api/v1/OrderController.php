@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Events\IamHere;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
@@ -31,7 +32,7 @@ class OrderController extends Controller
 
         // Trigger any relevant events after order creation
         $idForNoti = $order->menu_id . "2";
-        event(new MyEvent($idForNoti));
+        event(new IamHere($idForNoti));
 
         return response()->json(['message' => 'Noti created under event id: ' . $idForNoti]);
     }
