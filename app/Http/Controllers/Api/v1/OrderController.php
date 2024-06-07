@@ -20,7 +20,7 @@ class OrderController extends Controller
 
     public function setNotiByCustomer($orderId)
     {
-       
+
         // Find the order by ID
         $order = Order::findOrFail($orderId);
 
@@ -32,23 +32,23 @@ class OrderController extends Controller
         // Trigger any relevant events after order creation
         $idForNoti = $order->menu_id . "2";
         event(new MyEvent($idForNoti));
-        
+
         return response()->json(['message' => 'Noti created under event id: ' . $idForNoti]);
     }
 
 
 
-      // Get check-ins based on menu ID
-      public function getCheckinsByMenuId($menuId)
-      {
-          $checkins = Order::where('menu_id', $menuId)
-                           ->with('checkins')
-                           ->get()
-                           ->pluck('checkins')
-                           ->flatten();
-  
-          return response()->json($checkins);
-      }
+    // Get check-ins based on menu ID
+    public function getCheckinsByMenuId($menuId)
+    {
+        $checkins = Order::where('menu_id', $menuId)
+            ->with('checkins')
+            ->get()
+            ->pluck('checkins')
+            ->flatten();
+
+        return response()->json($checkins);
+    }
 
 
 
@@ -73,7 +73,7 @@ class OrderController extends Controller
         $order->status = $request->status;
 
         if ($request->status == "DONE") {
-         
+
             // Delete the associated check-ins
             $order->checkins()->delete();
 
@@ -85,6 +85,50 @@ class OrderController extends Controller
 
         return response()->json(['message' => 'Order status updated successfully']);
     }
+
+    // public function filterOrders(Request $request, $menuId)
+    // {
+    //     $query = Order::query();
+
+    //     // Filter by menu ID from the URL parameter
+    //     $query->where('menu_id', $menuId);
+
+    //     // Add status filters if any of them is set to true
+    //     $statuses = [];
+    //     if ($request->input('NEW', false)) {
+    //         $statuses[] = 'new';
+    //     }
+    //     if ($request->input('ACCEPTED', false)) {
+    //         $statuses[] = 'accepted';
+    //     }
+    //     if ($request->input('REJECTED', false)) {
+    //         $statuses[] = 'rejected';
+    //     }
+    //     if ($request->input('TIMEOUT', false)) {
+    //         $statuses[] = 'timeout';
+    //     }
+    //     if ($request->input('DONE', false)) {
+    //         $statuses[] = 'done'; // Add the 'done' status to your filter
+    //     }
+
+
+    //     $query->whereIn('status', $statuses);
+
+    //     // Order by 'created_at' in descending order
+    //     $query->orderBy('created_at', 'desc');
+
+
+    //     $orders = $query->get();
+
+    //     // Decode the order_info JSON string for each order
+    //     $orders->transform(function ($order) {
+    //         $order->order_info = json_decode($order->order_info, true);
+    //         return $order;
+    //     });
+
+    //     return response()->json($orders);
+    // }
+
 
     public function filterOrders(Request $request, $menuId)
     {
@@ -111,18 +155,19 @@ class OrderController extends Controller
             $statuses[] = 'done'; // Add the 'done' status to your filter
         }
 
+        if (!empty($statuses)) {
+            $query->whereIn('status', $statuses);
+        }
 
-        $query->whereIn('status', $statuses);
-        
         // Order by 'created_at' in descending order
         $query->orderBy('created_at', 'desc');
 
+        $orders = $query->with('checkins')->get(); // Load the related check-ins
 
-        $orders = $query->get();
-
-        // Decode the order_info JSON string for each order
+        // Decode the order_info JSON string for each order and check for check-ins
         $orders->transform(function ($order) {
             $order->order_info = json_decode($order->order_info, true);
+            $order->checkin = $order->checkins->isNotEmpty(); // Check if there are any check-ins
             return $order;
         });
 
@@ -175,11 +220,11 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-      
+
 
         // Construct the response object
         $response = [
-           
+
             'status' => $order->status,
         ];
 
@@ -245,7 +290,7 @@ class OrderController extends Controller
         $order = Order::create($orderData);
 
         // Trigger any relevant events after order creation
-         event(new MyEvent($order->menu_id));
+        event(new MyEvent($order->menu_id));
 
         // Return a JSON response with the generated order ID
         return response()->json(['orderId' => $order->id]);
