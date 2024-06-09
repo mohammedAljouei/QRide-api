@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Events\MyEvent;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Artisan;
 
-use App\Jobs\UpdateOrderStatusToTimeout;
 
 
 class OrderController extends Controller
@@ -84,18 +84,21 @@ class OrderController extends Controller
 
         $order->save();
 
-        // start newly added by mphammed 
-
-        if (!in_array($request->status, ['DONE', 'REJECTED', 'ACCEPTED'])) {
-            // Dispatch the job to update status to TIMEOUT after 1.5 minutes
-            UpdateOrderStatusToTimeout::dispatch($orderId)->delay(now()->addMinutes(0.5));
-        }
-
-        // end newly added by mohammed 
 
         event(new MyEvent($orderId)); // newly added by Eng. Mohammed
 
-        return response()->json(['message' => 'Order status updated successfully']);
+        // Immediately respond to the client
+        $response = response()->json(['message' => 'Order status updated successfully']);
+
+        // Handle the delayed timeout update in a separate process
+        if (!in_array($request->status, ['DONE', 'REJECTED', 'ACCEPTED'])) {
+            Artisan::call('handle:order-timeout', [
+                'orderId' => $orderId,
+                '--delay' => 90 // delay in seconds
+            ]);
+        }
+
+        return $response;
     }
 
     // public function filterOrders(Request $request, $menuId)

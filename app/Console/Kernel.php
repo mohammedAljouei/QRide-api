@@ -24,4 +24,11 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
+        /**
+     * Register the custom commands for the application.
+     */
+    protected $commands = [
+        \App\Console\Commands\HandleOrderTimeout::class,
+    ];
 }
