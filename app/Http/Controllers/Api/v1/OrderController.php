@@ -33,9 +33,9 @@ class OrderController extends Controller
         // Check if the order was created more than 3 minutes ago
         $createdAt = Carbon::parse($order->created_at);
         $now = Carbon::now();
-        $diffInMinutes = $now->diffInMinutes($createdAt);
+        $diffInMinutes = $now->diffInSeconds($createdAt);
 
-        if ($diffInMinutes > 3) {
+        if ($diffInMinutes > 30) {
             // Update the status to TIMEOUT
             $order->status = 'TIMEOUT';
             $order->save();
