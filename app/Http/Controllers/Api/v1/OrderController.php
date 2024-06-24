@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Events\IamHere;
+use App\Events\TimeOut;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Order;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Events\MyEvent;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 
 
@@ -33,12 +33,15 @@ class OrderController extends Controller
         // Check if the order was created more than 3 minutes ago
         $createdAt = Carbon::parse($order->created_at);
         $now = Carbon::now();
-        $diffInMinutes = $now->diffInSeconds($createdAt);
+        $diffInSeconds = $now->diffInSeconds($createdAt);
 
-        if ($diffInMinutes > 30) {
+        if ($diffInSeconds > 180) {
             // Update the status to TIMEOUT
             $order->status = 'TIMEOUT';
             $order->save();
+
+            $idForTimeOut = $order->menu_id . "3";
+            event(new TimeOut($idForTimeOut));
 
             return response()->json(['message' => 'Order status updated to TIMEOUT due to inactivity.']);
         } else {
