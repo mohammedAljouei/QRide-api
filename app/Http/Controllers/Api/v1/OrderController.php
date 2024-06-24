@@ -35,7 +35,7 @@ class OrderController extends Controller
         $now = Carbon::now();
         $diffInMinutes = $now->diffInMinutes($createdAt);
 
-        if ($diffInMinutes > 0.5) {
+        if ($diffInMinutes > 3) {
             // Update the status to TIMEOUT
             $order->status = 'TIMEOUT';
             $order->save();
