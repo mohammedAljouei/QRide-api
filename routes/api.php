@@ -47,7 +47,7 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
 
 
 
-   
+
    Route::apiResource('add-on-infos' , AddOnInfoController::class); 
    Route::apiResource('add-on-titles' , AddOnTitleController::class); 
    Route::apiResource('meals' , MealController::class); 
@@ -80,6 +80,7 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::get('/timeslots/{menuId}/check', [TimeslotController::class, 'checkAvailability']);
    Route::get('/orders/status/{orderId}', 'OrderController@getOrderStatus');
    Route::post('/orders/noti/{orderId}', 'OrderController@setNotiByCustomer');
+   Route::post('/orders/validateTimeout/{orderId}', 'OrderController@setTimeOut');
 
    
 

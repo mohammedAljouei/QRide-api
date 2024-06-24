@@ -14,11 +14,38 @@ use Illuminate\Http\Request;
 use App\Events\MyEvent;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Artisan;
-
+use Carbon\Carbon;
 
 
 class OrderController extends Controller
 {
+
+    public function setTimeOut($orderId)
+    {
+        // Find the order by ID
+        $order = Order::findOrFail($orderId);
+
+        // Check if the order status is still NEW
+        if ($order->status !== 'NEW') {
+            return response()->json(['error' => 'Sorry, action already taken on this order.'], 422);
+        }
+
+        // Check if the order was created more than 3 minutes ago
+        $createdAt = Carbon::parse($order->created_at);
+        $now = Carbon::now();
+        $diffInMinutes = $now->diffInMinutes($createdAt);
+
+        if ($diffInMinutes > 0.5) {
+            // Update the status to TIMEOUT
+            $order->status = 'TIMEOUT';
+            $order->save();
+
+            return response()->json(['message' => 'Order status updated to TIMEOUT due to inactivity.']);
+        } else {
+            return response()->json(['message' => 'Order has not been inactive long enough to timeout.']);
+        }
+    }
+
 
 
     public function setNotiByCustomer($orderId)
@@ -90,13 +117,13 @@ class OrderController extends Controller
         // Immediately respond to the client
         $response = response()->json(['message' => 'Order status updated successfully']);
 
-        // Handle the delayed timeout update in a separate process
-        if (!in_array($request->status, ['DONE', 'REJECTED', 'ACCEPTED'])) {
-            Artisan::call('handle:order-timeout', [
-                'orderId' => $orderId,
-                '--delay' => 90 // delay in seconds
-            ]);
-        }
+        // // Handle the delayed timeout update in a separate process
+        // if (!in_array($request->status, ['DONE', 'REJECTED', 'ACCEPTED'])) {
+        //     Artisan::call('handle:order-timeout', [
+        //         'orderId' => $orderId,
+        //         '--delay' => 90 // delay in seconds
+        //     ]);
+        // }
 
         return $response;
     }
