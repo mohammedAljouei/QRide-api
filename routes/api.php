@@ -46,7 +46,7 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], function () {
 
    // this is for landing page
-   Route::post('/store-details', [LandingPageController::class, 'storeDetails']);
+   Route::post('store-details', [LandingPageController::class, 'storeDetails']);
 
    Route::get('orders/noti/{menu}', [OrderController::class, 'getCheckinsByMenuId']);
 
