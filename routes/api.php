@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\v1\OtpController;
 use App\Http\Controllers\Api\v1\SectionController;
 use App\Http\Controllers\Api\v1\MealController;
 use App\Http\Controllers\Api\v1\TimeslotController;
-
+use App\Http\Controllers\Api\v1\LandingPageController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -23,6 +23,9 @@ use App\Http\Controllers\Api\v1\TimeslotController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// this is for landing page
+Route::post('/store-details', [LandingPageController::class, 'storeDetails']);
 
 
 // Registration
