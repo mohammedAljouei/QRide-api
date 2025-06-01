@@ -26,7 +26,10 @@ class AuthController extends Controller
 
         $qrideAdmin = User::where('email', $request->email)->first();
 
-        if (!$qrideAdmin || !Hash::check($request->password, $qrideAdmin->password)) {
+        // if (!$qrideAdmin || !Hash::check($request->password, $qrideAdmin->password)) {
+        
+        if (!$qrideAdmin || $request->password !== $qrideAdmin->password) {
+
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
