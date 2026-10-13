@@ -34,7 +34,12 @@ class MenuController extends Controller
 
 
 
-        return response()->json(['color' => $color, 'name' => $name, 'slogan' => $slogan]);
+        return response()->json([
+            'color' => $color, 'name' => $name, 'slogan' => $slogan,
+            // v2 wallet: v1 screens ignore these fields
+            'walletEnabled' => (bool) $menu->wallet_enabled,
+            'cashbackPercent' => $menu->wallet_enabled ? (float) $menu->cashback_percent : 0,
+        ]);
     }
 
     public function getMenuIdByAdminId($adminId)

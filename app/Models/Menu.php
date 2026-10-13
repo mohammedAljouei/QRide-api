@@ -35,6 +35,8 @@ class Menu extends Model
     protected $casts = [
         'payment_methods' => 'array', // This will cast payment_methods to and from JSON
         'platforms'  => 'array', // This will cast platforms to and from JSON
+        'wallet_enabled' => 'boolean', // v2: cashback + wallet on/off for this shop
+        'cashback_percent' => 'float',
 
     ];
 

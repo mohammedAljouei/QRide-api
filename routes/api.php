@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\v1\SectionController;
 use App\Http\Controllers\Api\v1\MealController;
 use App\Http\Controllers\Api\v1\TimeslotController;
 use App\Http\Controllers\Api\v1\LandingPageController;
+use App\Http\Controllers\Api\v1\WalletController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -98,7 +99,7 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
 });
 
 
-Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 'middleware' => 'auth:sanctum'], function () {
+Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 'middleware' => ['auth:sanctum', 'deny.customers']], function () {
     Route::apiResource('admins' , AdminController::class); 
     Route::get('/admins/{admin}', 'AdminController@show');
 
@@ -157,6 +158,9 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 
 
  });
- 
 
 
+// v2 wallet: customer endpoints (customer tokens only)
+Route::group(['prefix' => 'v1', 'middleware' => 'auth:sanctum'], function () {
+    Route::get('/shops/{menu}/wallet', [WalletController::class, 'show']);
+});

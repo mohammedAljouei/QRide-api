@@ -15,6 +15,9 @@ use Illuminate\Http\Request;
 use App\Events\MyEvent;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Models\Customer;
+use App\Services\WalletService;
+use Illuminate\Support\Facades\Log;
 
 
 class OrderController extends Controller
@@ -114,6 +117,14 @@ class OrderController extends Controller
 
         $order->save();
 
+        // v2 wallet: cashback is credited once the order is done
+        if ($request->status == "DONE") {
+            try {
+                WalletService::earnForOrder($order);
+            } catch (\Throwable $e) {
+                Log::error('Cashback failed for order ' . $order->id . ': ' . $e->getMessage());
+            }
+        }
 
         event(new MyEvent($orderId)); // newly added by Eng. Mohammed
 
@@ -273,6 +284,11 @@ class OrderController extends Controller
             'status' => $order->status,
         ];
 
+        // v2 wallet: lets the order page show "you earned X"
+        if ($order->cashback_amount > 0) {
+            $response['cashbackAmount'] = (float) $order->cashback_amount;
+        }
+
         // Return the order in JSON format
         return response()->json($response);
     }
@@ -334,11 +350,32 @@ class OrderController extends Controller
         // Create the order in the database
         $order = Order::create($orderData);
 
+        // v2 wallet: link the order to the customer and record the real total (shops with the wallet on only)
+        $customerToken = null;
+        try {
+            if (WalletService::enabledFor($order->menu_id)) {
+                $customer = WalletService::customerForPhone($validatedData['userInfo']['phone']);
+                if ($customer) {
+                    $order->customer_id = $customer->id;
+                    $order->server_total = WalletService::serverTotal($validatedData['orderInfo']['meals']);
+                    $order->save();
+
+                    // Give this device a wallet token unless it already has one for this customer
+                    $current = auth('sanctum')->user();
+                    if (!($current instanceof Customer) || $current->id !== $customer->id) {
+                        $customerToken = $customer->createToken('wallet', ['customer'])->plainTextToken;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error('Wallet link failed for order ' . $order->id . ': ' . $e->getMessage());
+        }
+
         // Trigger any relevant events after order creation
         event(new MyEvent($order->menu_id));
 
         // Return a JSON response with the generated order ID
-        return response()->json(['orderId' => $order->id]);
+        return response()->json(array_filter(['orderId' => $order->id, 'customerToken' => $customerToken]));
     }
 
 
