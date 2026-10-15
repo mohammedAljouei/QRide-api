@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\v1\MealController;
 use App\Http\Controllers\Api\v1\TimeslotController;
 use App\Http\Controllers\Api\v1\LandingPageController;
 use App\Http\Controllers\Api\v1\WalletController;
+use App\Http\Controllers\Api\v1\CustomerAuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -163,4 +164,10 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 // v2 wallet: customer endpoints (customer tokens only)
 Route::group(['prefix' => 'v1', 'middleware' => 'auth:sanctum'], function () {
     Route::get('/shops/{menu}/wallet', [WalletController::class, 'show']);
+});
+
+// v2 wallet: phone verification before spending (rate-limited per IP)
+Route::group(['prefix' => 'v1'], function () {
+    Route::post('/customer/otp/start', [CustomerAuthController::class, 'startOtp'])->middleware('throttle:5,1');
+    Route::post('/customer/otp/verify', [CustomerAuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
 });

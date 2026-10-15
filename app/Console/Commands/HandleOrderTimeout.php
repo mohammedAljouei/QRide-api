@@ -32,6 +32,7 @@ class HandleOrderTimeout extends Command
         if ($order && !in_array($order->status, ['DONE', 'REJECTED', 'ACCEPTED'])) {
             $order->status = 'TIMEOUT';
             $order->save();
+            \App\Services\WalletService::releaseOrder($order); // v2 wallet: give back any held amount
             Log::info("Order status updated to TIMEOUT for order ID: {$orderId}");
         }
 

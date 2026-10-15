@@ -28,6 +28,7 @@ class WalletController extends Controller
         return response()->json([
             'balance' => $wallet ? $wallet->balance() : 0,
             'cashbackPercent' => (float) $menu->cashback_percent,
+            'canSpend' => $customer->tokenCan('spend'), // false = the app asks for an SMS code first
             'transactions' => $wallet
                 ? $wallet->transactions()->where('status', 'posted')->latest('id')->limit(20)
                     ->get(['type', 'amount', 'source_type', 'created_at'])

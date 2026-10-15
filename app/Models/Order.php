@@ -29,6 +29,7 @@ class Order extends Model
         'customer_id', // v2 wallet
         'server_total',
         'cashback_amount',
+        'wallet_amount',
         ];
 
 

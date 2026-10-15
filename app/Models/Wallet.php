@@ -24,8 +24,11 @@ class Wallet extends Model
         return $this->hasMany(WalletTransaction::class);
     }
 
+    // What the customer can spend: posted money minus holds on orders that aren't done yet
     public function balance(): float
     {
-        return round((float) $this->transactions()->where('status', 'posted')->sum('amount'), 2);
+        $posted = (float) $this->transactions()->where('status', 'posted')->sum('amount');
+        $held = (float) $this->transactions()->where('status', 'pending')->where('amount', '<', 0)->sum('amount');
+        return round($posted + $held, 2);
     }
 }

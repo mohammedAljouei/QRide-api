@@ -14,6 +14,18 @@ return [
     |
     */
 
+    // v2 wallet: one-time codes before a customer can spend their balance
+    'vonage' => [
+        'key' => env('VONAGE_KEY'),
+        'secret' => env('VONAGE_SECRET'),
+        'brand' => env('VONAGE_BRAND', 'QRide'),
+    ],
+
+    'otp' => [
+        'driver' => env('OTP_DRIVER', 'vonage'),  // 'log' = no SMS, accepts test_code (refused in production)
+        'test_code' => env('OTP_TEST_CODE', '1234'),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

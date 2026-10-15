@@ -31,17 +31,17 @@ return new class extends Migration
             $table->unique(['menu_id', 'customer_id']);
         });
 
-        // Ledger: the balance is the sum of posted amounts
+        // Ledger: the available balance is the sum of posted amounts minus open holds
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('wallet_id')->index();
             $table->string('type');                         // earn | redeem
             $table->decimal('amount', 10, 2);               // positive = in, negative = out
-            $table->string('status')->default('posted');    // posted | pending | void
+            $table->string('status')->default('posted');    // posted | pending (a hold on an open order) | void
             $table->string('source_type');                  // order | counter
             $table->unsignedBigInteger('source_id')->nullable();
             $table->timestamps();
-            $table->unique(['source_type', 'source_id', 'type']); // an order can only earn once
+            $table->unique(['source_type', 'source_id', 'type']); // an order earns once and spends once
         });
 
         Schema::table('menus', function (Blueprint $table) {
@@ -53,13 +53,14 @@ return new class extends Migration
             $table->unsignedBigInteger('customer_id')->nullable();
             $table->decimal('server_total', 10, 2)->nullable();
             $table->decimal('cashback_amount', 10, 2)->nullable();
+            $table->decimal('wallet_amount', 10, 2)->nullable(); // paid from the wallet
         });
     }
 
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['customer_id', 'server_total', 'cashback_amount']);
+            $table->dropColumn(['customer_id', 'server_total', 'cashback_amount', 'wallet_amount']);
         });
 
         Schema::table('menus', function (Blueprint $table) {

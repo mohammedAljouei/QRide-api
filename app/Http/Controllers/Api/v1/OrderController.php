@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use App\Models\Customer;
 use App\Services\WalletService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 
 class OrderController extends Controller
@@ -42,6 +43,7 @@ class OrderController extends Controller
             // Update the status to TIMEOUT
             $order->status = 'TIMEOUT';
             $order->save();
+            WalletService::releaseOrder($order); // v2 wallet: give back any held amount
 
             $idForTimeOut = $order->menu_id . "3";
             event(new TimeOut($idForTimeOut));
@@ -117,13 +119,15 @@ class OrderController extends Controller
 
         $order->save();
 
-        // v2 wallet: cashback is credited once the order is done
-        if ($request->status == "DONE") {
-            try {
-                WalletService::earnForOrder($order);
-            } catch (\Throwable $e) {
-                Log::error('Cashback failed for order ' . $order->id . ': ' . $e->getMessage());
+        // v2 wallet: done = the wallet payment is taken and cashback credited; rejected/timeout = the hold is released
+        try {
+            if ($request->status == "DONE") {
+                WalletService::settleOrder($order);
+            } elseif (in_array($request->status, ['REJECTED', 'TIMEOUT'])) {
+                WalletService::releaseOrder($order);
             }
+        } catch (\Throwable $e) {
+            Log::error('Wallet update failed for order ' . $order->id . ': ' . $e->getMessage());
         }
 
         event(new MyEvent($orderId)); // newly added by Eng. Mohammed
@@ -308,6 +312,7 @@ class OrderController extends Controller
             'paymentInfo.paymentMethod' => 'required|in:applePay,cash,machine',
             'paymentInfo.paymentId' => 'nullable|string',
             'paymentInfo.totalPrice' => 'required|numeric',
+            'wallet.amount' => 'nullable|numeric|min:0', // v2: part of the total paid from the wallet
             // Add more validation rules as necessary
         ]);
 
@@ -347,13 +352,34 @@ class OrderController extends Controller
             'status' => 'NEW', // Adjust according to your application logic
         ];
 
-        // Create the order in the database
-        $order = Order::create($orderData);
+        // v2 wallet: paying part of the order from the wallet needs a phone-verified device
+        $walletAmount = round((float) ($validatedData['wallet']['amount'] ?? 0), 2);
+        $spender = $walletAmount > 0 ? auth('sanctum')->user() : null;
+        if ($walletAmount > 0 && (!WalletService::enabledFor($validatedData['menuId']) || !($spender instanceof Customer) || !$spender->tokenCan('spend'))) {
+            return response()->json(['message' => 'wallet_verify_required'], 422);
+        }
+
+        // Create the order (and, when paying from the wallet, its hold) together: if the hold fails, no order
+        try {
+            $order = DB::transaction(function () use ($orderData, $walletAmount, $spender, $validatedData) {
+                $order = Order::create($orderData);
+                if ($walletAmount > 0) {
+                    $order->server_total = WalletService::serverTotal($validatedData['orderInfo']['meals']);
+                    WalletService::holdForOrder($order, $spender, $walletAmount);
+                }
+                return $order;
+            });
+        } catch (\RuntimeException $e) {
+            if (str_starts_with($e->getMessage(), 'wallet_')) {
+                return response()->json(['message' => $e->getMessage()], 422); // wallet_insufficient | wallet_amount_invalid
+            }
+            throw $e;
+        }
 
         // v2 wallet: link the order to the customer and record the real total (shops with the wallet on only)
         $customerToken = null;
         try {
-            if (WalletService::enabledFor($order->menu_id)) {
+            if ($walletAmount <= 0 && WalletService::enabledFor($order->menu_id)) {
                 $customer = WalletService::customerForPhone($validatedData['userInfo']['phone']);
                 if ($customer) {
                     $order->customer_id = $customer->id;

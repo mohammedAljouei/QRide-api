@@ -62,6 +62,56 @@ class WalletService
         return round(max(0, $amount) * (float) $menu->cashback_percent / 100, 2);
     }
 
+    // The most this order can be charged: never more than the menu prices say, never more than the app showed
+    public static function payable(Order $order): float
+    {
+        return round(min((float) $order->total_price, (float) ($order->server_total ?? $order->total_price)), 2);
+    }
+
+    // Puts a hold on the customer's balance for an order that was just placed.
+    // Throws if the balance isn't enough; the caller rolls back the order.
+    public static function holdForOrder(Order $order, Customer $customer, float $amount): WalletTransaction
+    {
+        $amount = round($amount, 2);
+        if ($amount <= 0 || $amount > self::payable($order)) {
+            throw new \RuntimeException('wallet_amount_invalid');
+        }
+
+        $wallet = self::walletFor($order->menu_id, $customer->id);
+        Wallet::whereKey($wallet->id)->lockForUpdate()->first(); // two orders can't spend the same money
+        if ($wallet->balance() < $amount) {
+            throw new \RuntimeException('wallet_insufficient');
+        }
+
+        $order->customer_id = $customer->id;
+        $order->wallet_amount = $amount;
+        $order->save();
+
+        return WalletTransaction::create([
+            'wallet_id' => $wallet->id,
+            'type' => 'redeem',
+            'amount' => -$amount,
+            'status' => 'pending',
+            'source_type' => 'order',
+            'source_id' => $order->id,
+        ]);
+    }
+
+    // Order DONE: the hold becomes a real deduction, then cashback is credited on the money actually paid
+    public static function settleOrder(Order $order): void
+    {
+        WalletTransaction::where(['source_type' => 'order', 'source_id' => $order->id, 'type' => 'redeem', 'status' => 'pending'])
+            ->update(['status' => 'posted']);
+        self::earnForOrder($order);
+    }
+
+    // Order REJECTED / TIMEOUT: the held amount goes back to the customer
+    public static function releaseOrder(Order $order): void
+    {
+        WalletTransaction::where(['source_type' => 'order', 'source_id' => $order->id, 'type' => 'redeem', 'status' => 'pending'])
+            ->update(['status' => 'void']);
+    }
+
     // Credits the order's cashback once it's DONE. Safe to call more than once: an order earns only once.
     public static function earnForOrder(Order $order): ?WalletTransaction
     {
@@ -70,8 +120,8 @@ class WalletService
             return null;
         }
 
-        // Never give cashback on more than the customer was actually asked to pay
-        $paid = min((float) $order->total_price, (float) ($order->server_total ?? $order->total_price));
+        // Cashback only on what was paid in money, not on the part paid from the wallet
+        $paid = self::payable($order) - (float) $order->wallet_amount;
         $amount = self::cashbackFor($menu, $paid);
         if ($amount <= 0) {
             return null;
