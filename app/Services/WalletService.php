@@ -57,9 +57,54 @@ class WalletService
         return round($total, 2);
     }
 
-    public static function cashbackFor(Menu $menu, float $amount): float
+    public static function cashbackFor(Menu $menu, float $amount, ?float $percent = null): float
     {
-        return round(max(0, $amount) * (float) $menu->cashback_percent / 100, 2);
+        return round(max(0, $amount) * ($percent ?? (float) $menu->cashback_percent) / 100, 2);
+    }
+
+    // The shop's chances, e.g. [1 => 0, 2 => 0, 3 => 0, 4 => 15, 5 => 85]; empty = fixed cashback_percent
+    public static function odds(Menu $menu): array
+    {
+        $odds = [];
+        foreach ((array) $menu->cashback_odds as $percent => $weight) {
+            $odds[(string) (float) $percent] = max(0, (int) $weight);
+        }
+        ksort($odds, SORT_NUMERIC);
+        return array_sum($odds) > 0 ? $odds : [];
+    }
+
+    // Every percent shown on the wheel (including ones with 0 chance)
+    public static function wheel(Menu $menu): array
+    {
+        $odds = self::odds($menu);
+        return $odds ? array_map('floatval', array_keys($odds)) : [(float) $menu->cashback_percent];
+    }
+
+    // Draws this order's percent on the server; a percent with 0 chance can never be drawn
+    public static function drawPercent(Menu $menu): float
+    {
+        $odds = self::odds($menu);
+        if (!$odds) {
+            return (float) $menu->cashback_percent;
+        }
+        $pick = random_int(1, array_sum($odds));
+        foreach ($odds as $percent => $weight) {
+            $pick -= $weight;
+            if ($weight > 0 && $pick <= 0) {
+                return (float) $percent;
+            }
+        }
+        return (float) array_key_last($odds); // not reached
+    }
+
+    // Gives a wallet order its drawn percent once
+    public static function drawForOrder(Order $order): void
+    {
+        $menu = Menu::find($order->menu_id);
+        if ($menu && $menu->wallet_enabled && $order->customer_id && $order->cashback_percent === null) {
+            $order->cashback_percent = self::drawPercent($menu);
+            $order->save();
+        }
     }
 
     // The most this order can be charged: never more than the menu prices say, never more than the app showed
@@ -122,7 +167,7 @@ class WalletService
 
         // Cashback only on what was paid in money, not on the part paid from the wallet
         $paid = self::payable($order) - (float) $order->wallet_amount;
-        $amount = self::cashbackFor($menu, $paid);
+        $amount = self::cashbackFor($menu, $paid, $order->cashback_percent !== null ? (float) $order->cashback_percent : null);
         if ($amount <= 0) {
             return null;
         }

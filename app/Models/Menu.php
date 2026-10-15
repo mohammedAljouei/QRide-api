@@ -37,6 +37,7 @@ class Menu extends Model
         'platforms'  => 'array', // This will cast platforms to and from JSON
         'wallet_enabled' => 'boolean', // v2: cashback + wallet on/off for this shop
         'cashback_percent' => 'float',
+        'cashback_odds' => 'array',
 
     ];
 

@@ -288,7 +288,10 @@ class OrderController extends Controller
             'status' => $order->status,
         ];
 
-        // v2 wallet: lets the order page show "you earned X"
+        // v2 wallet: the drawn percent (revealed right away) and, once done, the amount earned
+        if ($order->cashback_percent > 0) {
+            $response['cashbackPercent'] = (float) $order->cashback_percent;
+        }
         if ($order->cashback_amount > 0) {
             $response['cashbackAmount'] = (float) $order->cashback_amount;
         }
@@ -395,6 +398,13 @@ class OrderController extends Controller
             }
         } catch (\Throwable $e) {
             Log::error('Wallet link failed for order ' . $order->id . ': ' . $e->getMessage());
+        }
+
+        // v2 wallet: draw this order's cashback percent (the order page reveals it)
+        try {
+            WalletService::drawForOrder($order);
+        } catch (\Throwable $e) {
+            Log::error('Cashback draw failed for order ' . $order->id . ': ' . $e->getMessage());
         }
 
         // Trigger any relevant events after order creation

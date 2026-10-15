@@ -7,6 +7,7 @@ use App\Http\Requests\StoreMenuRequest;
 use App\Http\Requests\UpdateMenuRequest;
 use App\Models\Menu;
 use App\Models\Section;
+use App\Services\WalletService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -38,7 +39,9 @@ class MenuController extends Controller
             'color' => $color, 'name' => $name, 'slogan' => $slogan,
             // v2 wallet: v1 screens ignore these fields
             'walletEnabled' => (bool) $menu->wallet_enabled,
-            'cashbackPercent' => $menu->wallet_enabled ? (float) $menu->cashback_percent : 0,
+            // the highest percent on offer ("up to"); the chances themselves are never sent to the app
+            'cashbackPercent' => $menu->wallet_enabled ? max(WalletService::wheel($menu)) : 0,
+            'cashbackWheel' => $menu->wallet_enabled && WalletService::odds($menu) ? WalletService::wheel($menu) : null,
         ]);
     }
 

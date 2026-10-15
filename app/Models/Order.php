@@ -30,6 +30,7 @@ class Order extends Model
         'server_total',
         'cashback_amount',
         'wallet_amount',
+        'cashback_percent',
         ];
 
 
