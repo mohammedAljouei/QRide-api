@@ -10,6 +10,7 @@ use App\Models\Meal;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\Section;
+use App\Models\SuperAdmin;
 use App\Models\WalletTransaction;
 use Tests\Support\LegacySchema;
 use Tests\TestCase;
@@ -30,7 +31,9 @@ class WalletTest extends TestCase
         $admin = Admin::create(['name' => 'Staff', 'email' => 'staff@qride.net', 'password' => 'secret']);
         $this->adminToken = $admin->createToken('authToken', ['admin'])->plainTextToken;
 
-        $this->shop = Menu::create(['admin_id' => $admin->id, 'super_admin_id' => 1, 'version' => 1, 'status' => 'active', 'name' => 'Cafe']);
+        $owner = SuperAdmin::create(['name' => 'Owner', 'email' => 'owner@qride.net', 'password' => 'secret']);
+
+        $this->shop = $this->makeShop($admin->id, $owner->id, 'Cafe');
         $section = Section::create(['menu_id' => $this->shop->id, 'name' => 'Coffee', 'sort' => 1]);
         $this->latte = Meal::create(['section_id' => $section->id, 'name' => 'Latte', 'price' => 20, 'status' => 1, 'sort' => 1]);
         $milk = AddOnTitle::create(['meal_id' => $this->latte->id, 'title' => 'Milk', 'min' => 0, 'max' => 1]);
@@ -44,6 +47,16 @@ class WalletTest extends TestCase
         return parent::json($method, $uri, $data, $headers, $options);
     }
 
+    // Live columns are NOT NULL, so a shop needs all of them (as onboarding sets them)
+    private function makeShop(int $adminId, int $ownerId, string $name): Menu
+    {
+        return Menu::create([
+            'admin_id' => $adminId, 'super_admin_id' => $ownerId, 'version' => 1, 'status' => 'active',
+            'name' => $name, 'slogan' => '', 'color' => '#0F766E',
+            'payment_methods' => ['cash' => true, 'Machine' => true, 'applePay' => false], 'platforms' => [],
+        ]);
+    }
+
     private function enableWallet(float $percent = 5): void
     {
         $this->shop->forceFill(['wallet_enabled' => true, 'cashback_percent' => $percent])->save();
@@ -55,6 +68,7 @@ class WalletTest extends TestCase
         $headers = $token ? ['Authorization' => "Bearer $token"] : [];
         return $this->postJson('/api/v1/place-order', [
             'menuId' => $this->shop->id,
+            'note' => 'any', // what the app sends by default
             'carInfo' => ['carSize' => 'mid', 'carColor' => '#000000'],
             'userInfo' => ['phone' => $phone],
             'orderInfo' => ['meals' => [['mealId' => $this->latte->id, 'price' => 23, 'count' => 2, 'addOnsItems' => ['Oat']]]],
@@ -155,7 +169,7 @@ class WalletTest extends TestCase
     {
         $this->enableWallet(5);
         $token = $this->placeOrder()->json('customerToken');
-        $other = Menu::create(['admin_id' => 1, 'super_admin_id' => 1, 'version' => 1, 'status' => 'active']);
+        $other = $this->makeShop($this->shop->admin_id, $this->shop->super_admin_id, 'Other');
         $other->forceFill(['wallet_enabled' => true, 'cashback_percent' => 5])->save();
 
         $this->setStatus(Order::first()->id, 'DONE');
@@ -203,7 +217,7 @@ class WalletTest extends TestCase
         $this->assertSame(0, \DB::table('personal_access_tokens')->where('tokenable_type', Customer::class)->count());
         $this->assertSame(1, \DB::table('personal_access_tokens')->where('tokenable_type', Admin::class)->count());
         $this->assertSame('DONE', \DB::table('orders')->where('id', $orderId)->value('status'));
-        $this->assertSame('Cafe', \DB::table('menus')->value('name'));
+        $this->assertSame('Cafe', \DB::table('menus')->where('id', $this->shop->id)->value('name'));
     }
 
     public function test_wallet_is_hidden_when_shop_has_it_off(): void

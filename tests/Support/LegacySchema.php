@@ -4,15 +4,41 @@ namespace Tests\Support;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Builds the v1 tables the way the live database has them (the repo's old migrations are out of date),
  * then runs the real v2 migration on top. Tests only, never used in production.
+ *
+ * Default: an in-memory SQLite copy. With QRIDE_SCHEMA_SQL pointing to a structure-only export of the live
+ * database and DB_CONNECTION=mysql, the tests run on that exact structure instead (MariaDB).
  */
 trait LegacySchema
 {
     protected function buildSchema(): void
+    {
+        $dump = env('QRIDE_SCHEMA_SQL');
+        if ($dump && DB::getDriverName() === 'mysql') {
+            $this->loadLiveSchema($dump);
+        } else {
+            $this->buildSqliteSchema();
+        }
+
+        Artisan::call('migrate', ['--path' => 'database/migrations/2026_10_13_000000_qride_v2_wallet.php']);
+    }
+
+    private function loadLiveSchema(string $dump): void
+    {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        foreach (DB::select('SHOW TABLES') as $row) {
+            DB::statement('DROP TABLE `' . array_values((array) $row)[0] . '`');
+        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        DB::unprepared(file_get_contents($dump));
+    }
+
+    private function buildSqliteSchema(): void
     {
         Schema::create('admins', function (Blueprint $t) {
             $t->id(); $t->string('name'); $t->string('email')->unique(); $t->string('password'); $t->timestamps();
@@ -39,15 +65,14 @@ trait LegacySchema
             $t->id(); $t->integer('add_on_title_id'); $t->string('name'); $t->double('price', 8, 2); $t->timestamps();
         });
         Schema::create('orders', function (Blueprint $t) {
-            $t->id(); $t->integer('menu_id'); $t->string('note')->nullable(); $t->json('order_info'); $t->string('car_color');
+            $t->id(); $t->integer('menu_id'); $t->string('note'); $t->json('order_info'); $t->string('car_color');
             $t->integer('phone'); $t->string('car_size'); $t->string('status'); $t->string('payment_method');
-            $t->string('payment_id')->nullable(); $t->double('total_price', 10, 2); $t->timestamps();
+            $t->string('payment_id'); $t->string('total_price'); $t->timestamps();
         });
         Schema::create('customer_checkins', function (Blueprint $t) {
             $t->id(); $t->integer('order_id'); $t->timestamp('checkin_time')->nullable();
         });
 
         Artisan::call('migrate', ['--path' => 'database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php']);
-        Artisan::call('migrate', ['--path' => 'database/migrations/2026_10_13_000000_qride_v2_wallet.php']);
     }
 }
