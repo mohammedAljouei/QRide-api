@@ -48,6 +48,7 @@ return new class extends Migration
             $table->boolean('wallet_enabled')->default(false);
             $table->decimal('cashback_percent', 5, 2)->default(0);
             $table->json('cashback_odds')->nullable(); // e.g. {"1":0,"2":0,"3":0,"4":15,"5":85}; null = always cashback_percent
+            $table->decimal('wallet_min_balance', 10, 2)->default(10); // the wallet can be used once the balance reaches this
         });
 
         Schema::table('orders', function (Blueprint $table) {
@@ -66,7 +67,7 @@ return new class extends Migration
         });
 
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds']);
+            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds', 'wallet_min_balance']);
         });
 
         Schema::dropIfExists('wallet_transactions');

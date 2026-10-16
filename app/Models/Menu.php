@@ -38,6 +38,7 @@ class Menu extends Model
         'wallet_enabled' => 'boolean', // v2: cashback + wallet on/off for this shop
         'cashback_percent' => 'float',
         'cashback_odds' => 'array',
+        'wallet_min_balance' => 'float',
 
     ];
 

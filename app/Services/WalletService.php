@@ -62,39 +62,59 @@ class WalletService
         return round(max(0, $amount) * ($percent ?? (float) $menu->cashback_percent) / 100, 2);
     }
 
-    // The shop's chances, e.g. [1 => 0, 2 => 0, 3 => 0, 4 => 15, 5 => 85]; empty = fixed cashback_percent
+    // Balance the customer needs before the wallet can be used at this shop
+    public static function minBalance(?Menu $menu): float
+    {
+        return $menu ? max(0, (float) ($menu->wallet_min_balance ?? 10)) : 10;
+    }
+
+    // The shop's chances as whole weights: {"4":15,"5":85} -> ["4" => 1500, "5" => 8500].
+    // Weights are relative (they don't need to add up to 100) and decimals are kept exactly (85.5 -> 8550).
+    // Entries that aren't a positive percent with a number for a chance are ignored. Empty = fixed cashback_percent.
     public static function odds(Menu $menu): array
     {
         $odds = [];
-        foreach ((array) $menu->cashback_odds as $percent => $weight) {
-            $odds[(string) (float) $percent] = max(0, (int) $weight);
+        foreach ((array) $menu->cashback_odds as $percent => $chance) {
+            if (!is_numeric($percent) || !is_numeric($chance) || (float) $percent <= 0) {
+                continue;
+            }
+            $odds[(string) (float) $percent] = max(0, (int) round((float) $chance * 100));
         }
         ksort($odds, SORT_NUMERIC);
         return array_sum($odds) > 0 ? $odds : [];
     }
 
-    // Every percent shown on the wheel (including ones with 0 chance)
+    // Every percent shown on the wheel, including ones with 0 chance
     public static function wheel(Menu $menu): array
     {
         $odds = self::odds($menu);
         return $odds ? array_map('floatval', array_keys($odds)) : [(float) $menu->cashback_percent];
     }
 
-    // Draws this order's percent on the server; a percent with 0 chance can never be drawn
-    public static function drawPercent(Menu $menu): float
+    // Draws this order's percent on the server. $pick is a uniform random whole number from 1 to the sum of
+    // the weights (random_int, a secure generator); tests pass every possible pick to prove the odds exactly.
+    public static function drawPercent(Menu $menu, ?int $pick = null): float
     {
         $odds = self::odds($menu);
         if (!$odds) {
             return (float) $menu->cashback_percent;
         }
-        $pick = random_int(1, array_sum($odds));
+        $pick ??= random_int(1, array_sum($odds));
+        return self::percentForPick($odds, $pick);
+    }
+
+    // Lays the weights end to end on 1..sum and returns the percent whose stretch contains $pick.
+    // A percent with weight 0 has an empty stretch, so no pick can ever land on it.
+    public static function percentForPick(array $odds, int $pick): float
+    {
+        $upTo = 0;
         foreach ($odds as $percent => $weight) {
-            $pick -= $weight;
-            if ($weight > 0 && $pick <= 0) {
+            $upTo += $weight;
+            if ($weight > 0 && $pick <= $upTo) {
                 return (float) $percent;
             }
         }
-        return (float) array_key_last($odds); // not reached
+        throw new \LogicException('pick out of range'); // only if $pick > sum of weights, which random_int never gives
     }
 
     // Gives a wallet order its drawn percent once
@@ -124,7 +144,11 @@ class WalletService
 
         $wallet = self::walletFor($order->menu_id, $customer->id);
         Wallet::whereKey($wallet->id)->lockForUpdate()->first(); // two orders can't spend the same money
-        if ($wallet->balance() < $amount) {
+        $balance = $wallet->balance();
+        if ($balance < self::minBalance(Menu::find($order->menu_id))) {
+            throw new \RuntimeException('wallet_below_minimum'); // the wallet unlocks at the shop's minimum (10 by default)
+        }
+        if ($balance < $amount) {
             throw new \RuntimeException('wallet_insufficient');
         }
 

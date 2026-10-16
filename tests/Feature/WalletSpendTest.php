@@ -119,12 +119,39 @@ class WalletSpendTest extends WalletTestCase
 
     public function test_the_same_money_cannot_be_spent_twice(): void
     {
-        $this->giveBalance(10);
+        $this->giveBalance(30);
         $token = $this->verifiedToken();
 
-        $this->placeOrder(46, '0512345678', $token, 8)->assertOk();
-        $this->placeOrder(46, '0512345678', $token, 8)->assertStatus(422)->assertJson(['message' => 'wallet_insufficient']);
-        $this->assertEquals(2, $this->balance($token));
+        $this->placeOrder(46, '0512345678', $token, 15)->assertOk();
+        $this->placeOrder(46, '0512345678', $token, 16)->assertStatus(422)->assertJson(['message' => 'wallet_insufficient']);
+        $this->assertEquals(15, $this->balance($token));
+    }
+
+    public function test_wallet_unlocks_at_10_riyals(): void
+    {
+        $token = $this->verifiedToken();
+        $this->giveBalance(9.99);
+        $this->getJson("/api/v1/shops/{$this->shop->id}/wallet", ['Authorization' => "Bearer $token"])->assertJson(['minBalance' => 10]);
+        $this->placeOrder(46, '0512345678', $token, 5)->assertStatus(422)->assertJson(['message' => 'wallet_below_minimum']);
+
+        $this->giveBalance(0.01); // exactly 10 now
+        $this->placeOrder(46, '0512345678', $token, 5)->assertOk();
+    }
+
+    public function test_after_spending_below_10_the_wallet_locks_again(): void
+    {
+        $this->giveBalance(12);
+        $token = $this->verifiedToken();
+        $this->placeOrder(46, '0512345678', $token, 5)->assertOk(); // 7 left
+        $this->placeOrder(46, '0512345678', $token, 5)->assertStatus(422)->assertJson(['message' => 'wallet_below_minimum']);
+    }
+
+    public function test_minimum_is_set_per_shop(): void
+    {
+        $this->shop->forceFill(['wallet_min_balance' => 20])->save();
+        $this->giveBalance(15);
+        $token = $this->verifiedToken();
+        $this->placeOrder(46, '0512345678', $token, 5)->assertStatus(422)->assertJson(['message' => 'wallet_below_minimum']);
     }
 
     public function test_cannot_pay_more_than_the_order_from_the_wallet(): void

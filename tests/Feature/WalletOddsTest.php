@@ -36,6 +36,53 @@ class WalletOddsTest extends WalletTestCase
         $this->assertEqualsWithDelta(0.85, $counts['5'] / 2000, 0.04);
     }
 
+    // Tries every possible pick once: this is the exact distribution, not a sample
+    private function exactCounts(array $odds): array
+    {
+        $this->enableWheel($odds);
+        $weights = WalletService::odds($this->shop->fresh());
+        $counts = [];
+        for ($pick = 1; $pick <= array_sum($weights); $pick++) {
+            $p = (string) WalletService::drawPercent($this->shop, $pick);
+            $counts[$p] = ($counts[$p] ?? 0) + 1;
+        }
+        ksort($counts, SORT_NUMERIC);
+        return [$counts, array_sum($weights)];
+    }
+
+    public function test_exact_odds_are_85_and_15_and_never_1_2_3(): void
+    {
+        [$counts, $total] = $this->exactCounts(self::ODDS);
+        $this->assertSame(10000, $total);
+        $this->assertSame([4 => 1500, 5 => 8500], $counts); // exactly 15.00% and 85.00%; 1, 2, 3 never
+    }
+
+    public function test_chances_are_relative_so_3_to_17_is_also_15_85(): void
+    {
+        [$counts, $total] = $this->exactCounts(['4' => 3, '5' => 17]);
+        $this->assertSame(0.15, $counts[4] / $total);
+        $this->assertSame(0.85, $counts[5] / $total);
+    }
+
+    public function test_decimal_chances_are_exact(): void
+    {
+        [$counts] = $this->exactCounts(['4' => 14.5, '5' => 85.5]);
+        $this->assertSame([4 => 1450, 5 => 8550], $counts);
+    }
+
+    public function test_broken_entries_are_ignored(): void
+    {
+        $this->enableWheel(['abc' => 50, '4' => 'x', '-2' => 10, '0' => 30, '5' => 100]);
+        $this->assertSame(['5' => 10000], WalletService::odds($this->shop->fresh()));
+        $this->getJson("/api/v1/menu/{$this->shop->id}/shop-info")->assertJson(['cashbackWheel' => [5]]);
+    }
+
+    public function test_a_pick_outside_the_range_is_impossible(): void
+    {
+        $this->expectException(\LogicException::class);
+        WalletService::percentForPick(['4' => 1500, '5' => 8500], 10001);
+    }
+
     public function test_order_keeps_its_drawn_percent_and_earns_with_it(): void
     {
         $this->enableWheel(['1' => 0, '4' => 1]); // always 4
