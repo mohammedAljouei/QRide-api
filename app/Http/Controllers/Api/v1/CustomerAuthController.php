@@ -75,7 +75,13 @@ class CustomerAuthController extends Controller
     {
         $request->validate(['requestId' => 'required|string', 'code' => 'required|string']);
 
-        $phone = OtpService::check($request->requestId, $request->code);
+        try {
+            $phone = OtpService::check($request->requestId, $request->code);
+        } catch (\Throwable $e) {
+            // SMS provider unreachable: the code wasn't checked, so don't tell the customer it's wrong
+            Log::error('OTP check failed: ' . $e->getMessage());
+            return response()->json(['message' => 'otp_check_failed'], 503);
+        }
         if (!$phone) {
             return response()->json(['message' => 'wrong_code'], 422);
         }

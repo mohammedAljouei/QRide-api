@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -19,6 +20,9 @@ class OtpService
         if (self::driver() === 'log') {
             $requestId = 'test-' . Str::random(24);
             Log::info("OTP (log driver) for $phone: " . config('services.otp.test_code'));
+        } elseif (self::driver() === 'twilio') {
+            $response = self::twilio()->post('Verifications', ['To' => '+' . $phone, 'Channel' => 'sms'])->throw();
+            $requestId = 'tw-' . $response->json('sid');
         } else {
             $client = new \Vonage\Client(new \Vonage\Client\Credentials\Basic(config('services.vonage.key'), config('services.vonage.secret')));
             $response = $client->verify()->start(new \Vonage\Verify\Request($phone, config('services.vonage.brand')));
@@ -39,6 +43,10 @@ class OtpService
 
         if (self::driver() === 'log') {
             $ok = hash_equals((string) config('services.otp.test_code'), $code);
+        } elseif (self::driver() === 'twilio') {
+            // Checked against the phone the code was sent to (kept on our server), never one sent by the app
+            $response = self::twilio()->post('VerificationCheck', ['To' => '+' . $phone, 'Code' => $code]);
+            $ok = $response->successful() && $response->json('status') === 'approved';
         } else {
             try {
                 $client = new \Vonage\Client(new \Vonage\Client\Credentials\Basic(config('services.vonage.key'), config('services.vonage.secret')));
@@ -60,6 +68,17 @@ class OtpService
             Cache::forget(self::key($requestId));
         }
         return null;
+    }
+
+    private static function twilio()
+    {
+        return Http::asForm()
+            ->withBasicAuth((string) config('services.twilio.sid'), (string) config('services.twilio.token'))
+            ->baseUrl('https://verify.twilio.com/v2/Services/' . config('services.twilio.verify_sid') . '/')
+            // IPv4 only: on networks with broken IPv6 the request otherwise hangs until the timeout
+            ->withOptions(['force_ip_resolve' => 'v4'])
+            ->connectTimeout(5)
+            ->timeout(15);
     }
 
     private static function driver(): string

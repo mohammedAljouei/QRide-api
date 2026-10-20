@@ -21,8 +21,15 @@ return [
         'brand' => env('VONAGE_BRAND', 'QRide'),
     ],
 
+    // Twilio Verify (the SMS text uses the Verify Service's name, so use a service named "QRide")
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'verify_sid' => env('TWILIO_VERIFY_SID'),
+    ],
+
     'otp' => [
-        'driver' => env('OTP_DRIVER', 'vonage'),  // 'log' = no SMS, accepts test_code (refused in production)
+        'driver' => env('OTP_DRIVER', 'vonage'),  // 'twilio' | 'vonage' | 'log' (no SMS, accepts test_code; refused in production)
         'test_code' => env('OTP_TEST_CODE', '1234'),
         // false (for now): a phone counts as verified as soon as it's entered, no SMS. Turn on before launch.
         'required' => (bool) env('OTP_REQUIRED', false),
