@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\v1\TimeslotController;
 use App\Http\Controllers\Api\v1\LandingPageController;
 use App\Http\Controllers\Api\v1\WalletController;
 use App\Http\Controllers\Api\v1\CustomerAuthController;
+use App\Http\Controllers\Api\v1\ReceiptController;
+use App\Http\Controllers\Api\v1\CounterController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -164,10 +166,23 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1' , 
 // v2 wallet: customer endpoints (customer tokens only)
 Route::group(['prefix' => 'v1', 'middleware' => 'auth:sanctum'], function () {
     Route::get('/shops/{menu}/wallet', [WalletController::class, 'show']);
+    Route::get('/shops/{menu}/wallet/qr', [WalletController::class, 'qr']);
+    Route::post('/shops/{menu}/receipts', [ReceiptController::class, 'claim'])->middleware('throttle:20,1');
+    Route::get('/shops/{menu}/counter/pending', [CounterController::class, 'pending']);
+    Route::post('/counter/charges/{charge}/respond', [CounterController::class, 'respond']);
 });
 
 // v2 wallet: phone verification before spending (rate-limited per IP)
 Route::group(['prefix' => 'v1'], function () {
+    Route::post('/customer/device', [CustomerAuthController::class, 'device'])->middleware('throttle:10,1');
+    Route::post('/customer/phone', [CustomerAuthController::class, 'phone'])->middleware('throttle:10,1');
     Route::post('/customer/otp/start', [CustomerAuthController::class, 'startOtp'])->middleware('throttle:5,1');
     Route::post('/customer/otp/verify', [CustomerAuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
+});
+
+// v2 counter: cashier (staff logins only)
+Route::group(['prefix' => 'v1', 'middleware' => ['auth:sanctum', 'deny.customers']], function () {
+    Route::get('/counter/scan', [CounterController::class, 'scan']);
+    Route::post('/counter/charges', [CounterController::class, 'createCharge']);
+    Route::get('/counter/charges/{charge}', [CounterController::class, 'chargeStatus']);
 });

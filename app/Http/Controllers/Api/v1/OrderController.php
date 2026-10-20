@@ -392,7 +392,7 @@ class OrderController extends Controller
                     // Give this device a wallet token unless it already has one for this customer
                     $current = auth('sanctum')->user();
                     if (!($current instanceof Customer) || $current->id !== $customer->id) {
-                        $customerToken = $customer->createToken('wallet', ['customer'])->plainTextToken;
+                        $customerToken = $customer->createToken('wallet', WalletService::abilitiesForPhone())->plainTextToken;
                     }
                 }
             }

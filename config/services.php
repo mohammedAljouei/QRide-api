@@ -24,6 +24,14 @@ return [
     'otp' => [
         'driver' => env('OTP_DRIVER', 'vonage'),  // 'log' = no SMS, accepts test_code (refused in production)
         'test_code' => env('OTP_TEST_CODE', '1234'),
+        // false (for now): a phone counts as verified as soon as it's entered, no SMS. Turn on before launch.
+        'required' => (bool) env('OTP_REQUIRED', false),
+    ],
+
+    // v2 receipts: testing only. The same receipt can be claimed again and its printed time is ignored.
+    // Never active in production (ReceiptController checks the environment too).
+    'receipts' => [
+        'test_mode' => (bool) env('RECEIPT_TEST_MODE', false),
     ],
 
     'mailgun' => [

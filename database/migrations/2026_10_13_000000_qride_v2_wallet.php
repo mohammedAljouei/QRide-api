@@ -49,6 +49,34 @@ return new class extends Migration
             $table->decimal('cashback_percent', 5, 2)->default(0);
             $table->json('cashback_odds')->nullable(); // e.g. {"1":0,"2":0,"3":0,"4":15,"5":85}; null = always cashback_percent
             $table->decimal('wallet_min_balance', 10, 2)->default(10); // the wallet can be used once the balance reaches this
+            $table->string('vat_number')->nullable(); // ZATCA VAT number printed on the shop's receipts
+        });
+
+        // Receipts customers scanned to earn cashback at the counter (each receipt once)
+        Schema::create('receipt_claims', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('menu_id')->index();
+            $table->unsignedBigInteger('customer_id')->index();
+            $table->string('fingerprint', 64)->unique(); // the same receipt can't be claimed twice
+            $table->string('vat_number');
+            $table->timestamp('invoice_at')->nullable();
+            $table->decimal('total', 10, 2);
+            $table->decimal('cashback_percent', 5, 2);
+            $table->decimal('cashback_amount', 10, 2);
+            $table->unsignedBigInteger('order_id')->nullable(); // set when the receipt turned out to be a car order's (no cashback)
+            $table->timestamps();
+        });
+
+        // Cashier asks to deduct from a customer's wallet; the customer confirms on their phone
+        Schema::create('counter_charges', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('menu_id')->index();
+            $table->unsignedBigInteger('customer_id')->index();
+            $table->unsignedBigInteger('admin_id')->nullable();
+            $table->decimal('amount', 10, 2);
+            $table->string('status')->default('pending'); // pending | confirmed | declined | expired
+            $table->timestamp('expires_at');
+            $table->timestamps();
         });
 
         Schema::table('orders', function (Blueprint $table) {
@@ -67,8 +95,11 @@ return new class extends Migration
         });
 
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds', 'wallet_min_balance']);
+            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds', 'wallet_min_balance', 'vat_number']);
         });
+
+        Schema::dropIfExists('counter_charges');
+        Schema::dropIfExists('receipt_claims');
 
         Schema::dropIfExists('wallet_transactions');
         Schema::dropIfExists('wallets');

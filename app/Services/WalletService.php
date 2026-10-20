@@ -32,6 +32,12 @@ class WalletService
         return $normalized ? Customer::firstOrCreate(['phone' => $normalized]) : null;
     }
 
+    // What a wallet login may do. With OTP switched off, an entered phone counts as verified, so it can spend.
+    public static function abilitiesForPhone(): array
+    {
+        return config('services.otp.required') ? ['customer'] : ['customer', 'spend'];
+    }
+
     public static function walletFor($menuId, $customerId): Wallet
     {
         return Wallet::firstOrCreate(['menu_id' => $menuId, 'customer_id' => $customerId]);

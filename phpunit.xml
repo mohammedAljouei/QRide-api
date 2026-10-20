@@ -23,6 +23,8 @@
         <env name="BROADCAST_DRIVER" value="null"/>
         <env name="OTP_DRIVER" value="log"/>
         <env name="OTP_TEST_CODE" value="1234"/>
+        <env name="OTP_REQUIRED" value="true" force="true"/>
+        <env name="RECEIPT_TEST_MODE" value="false" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>

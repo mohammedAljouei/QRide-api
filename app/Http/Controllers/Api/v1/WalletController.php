@@ -6,12 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Menu;
 use App\Models\Wallet;
+use App\Services\CounterToken;
 use App\Services\WalletService;
 use Illuminate\Http\Request;
 
 // QRide v2: the customer's wallet at one shop
 class WalletController extends Controller
 {
+    // v2 counter: a fresh 30-second code for the wallet QR the cashier scans
+    public function qr(Request $request, $menuId)
+    {
+        $customer = $request->user();
+        if (!($customer instanceof Customer) || !$customer->tokenCan('customer')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        if (!WalletService::enabledFor($menuId)) {
+            return response()->json(['message' => 'Wallet is not available for this shop'], 404);
+        }
+        return response()->json(['code' => CounterToken::make($customer->id, (int) $menuId), 'expiresIn' => CounterToken::TTL_SECONDS]);
+    }
+
     public function show(Request $request, $menuId)
     {
         $customer = $request->user();
@@ -31,6 +45,7 @@ class WalletController extends Controller
             'cashbackPercent' => (float) $menu->cashback_percent,
             'canSpend' => $customer->tokenCan('spend'), // false = the app asks for an SMS code first
             'minBalance' => WalletService::minBalance($menu), // the wallet can be used once balance reaches this
+            'hasPhone' => $customer->phone !== null, // false = the card asks for the phone first
             'transactions' => $wallet
                 ? $wallet->transactions()->where('status', 'posted')->latest('id')->limit(20)
                     ->get(['type', 'amount', 'source_type', 'created_at'])
