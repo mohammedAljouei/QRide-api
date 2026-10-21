@@ -39,6 +39,7 @@ class Menu extends Model
         'cashback_percent' => 'float',
         'cashback_odds' => 'array',
         'wallet_min_balance' => 'float',
+        'is_test' => 'boolean', // QRide's own test shop (relaxed receipt checks)
 
     ];
 

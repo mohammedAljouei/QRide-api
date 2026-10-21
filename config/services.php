@@ -28,12 +28,6 @@ return [
         'required' => (bool) env('OTP_REQUIRED', false),
     ],
 
-    // v2 receipts: testing only. The same receipt can be claimed again and its printed time is ignored.
-    // Never active in production (ReceiptController checks the environment too).
-    'receipts' => [
-        'test_mode' => (bool) env('RECEIPT_TEST_MODE', false),
-    ],
-
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

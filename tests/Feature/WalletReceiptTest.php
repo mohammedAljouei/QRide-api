@@ -91,37 +91,62 @@ class WalletReceiptTest extends WalletTestCase
         $this->claim($qr)->assertOk()->assertJson(['total' => 1, 'cashbackAmount' => 0.05]);
     }
 
-    public function test_test_mode_lets_the_same_old_receipt_be_claimed_again(): void
+    private function makeTestShop(): void
     {
-        config(['services.receipts.test_mode' => true]);
+        $this->shop->forceFill(['is_test' => true])->save();
+    }
+
+    public function test_test_shop_lets_the_same_old_receipt_be_claimed_again(): void
+    {
+        $this->makeTestShop();
         $qr = $this->receipt('20', now()->subDays(3)->toIso8601String());
         $this->claim($qr)->assertOk();
         $this->claim($qr)->assertOk();
     }
 
-    public function test_test_mode_has_no_daily_limit(): void
+    public function test_test_shop_accepts_any_vat_number(): void
     {
-        config(['services.receipts.test_mode' => true]);
+        $this->makeTestShop();
+        $this->shop->forceFill(['vat_number' => null])->save();
+        $this->claim($this->receipt('20', null, '399999999999993'))->assertOk();
+    }
+
+    public function test_test_shop_has_no_daily_limit(): void
+    {
+        $this->makeTestShop();
         for ($i = 0; $i < 7; $i++) {
             $this->claim($this->receipt('12.00'))->assertOk();
         }
     }
 
-    public function test_test_mode_matches_an_old_receipt_to_a_car_order_placed_now(): void
+    public function test_test_shop_matches_an_old_receipt_to_a_car_order_placed_now(): void
     {
-        config(['services.receipts.test_mode' => true]);
+        $this->makeTestShop();
         $this->carOrder();
         $old = $this->receipt('46.00', now()->subDays(2)->toIso8601String()); // e.g. the real receipt from earlier
         $this->claim($old)->assertStatus(422)->assertJson(['message' => 'receipt_car_order']);
     }
 
-    public function test_test_mode_is_ignored_on_the_live_server(): void
+    public function test_test_shop_keeps_the_1000_limit(): void
     {
-        config(['services.receipts.test_mode' => true]);
+        $this->makeTestShop();
+        $this->claim($this->receipt('1000.01'))->assertStatus(422)->assertJson(['message' => 'receipt_too_large']);
+    }
+
+    public function test_a_real_shop_never_gets_the_test_rules_even_on_the_live_server(): void
+    {
         $this->app['env'] = 'production';
         $qr = $this->receipt();
         $this->claim($qr)->assertOk();
         $this->claim($qr)->assertStatus(422)->assertJson(['message' => 'receipt_already_claimed']);
+        $this->claim($this->receipt('20', null, '399999999999993'))->assertStatus(422)->assertJson(['message' => 'receipt_other_shop']);
+    }
+
+    public function test_shop_info_says_whether_it_is_the_test_shop(): void
+    {
+        $this->getJson("/api/v1/menu/{$this->shop->id}/shop-info")->assertJson(['isTest' => false])->assertJsonMissing(['vatNumber' => self::VAT]);
+        $this->makeTestShop();
+        $this->getJson("/api/v1/menu/{$this->shop->id}/shop-info")->assertJson(['isTest' => true]);
     }
 
     // The car order: 2 lattes with oat milk = 46, placed by the same phone as the receipt scanner

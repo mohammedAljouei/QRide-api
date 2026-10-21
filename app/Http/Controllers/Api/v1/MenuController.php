@@ -42,8 +42,8 @@ class MenuController extends Controller
             // the highest percent on offer ("up to"); the chances themselves are never sent to the app
             'cashbackPercent' => $menu->wallet_enabled ? max(WalletService::wheel($menu)) : 0,
             'cashbackWheel' => $menu->wallet_enabled && WalletService::odds($menu) ? WalletService::wheel($menu) : null,
-            // printed on every receipt anyway; the local test receipt uses it
-            'vatNumber' => $menu->wallet_enabled ? $menu->vat_number : null,
+            // QRide's test shop: the receipt scanner shows a "test receipt" button
+            'isTest' => $menu->wallet_enabled && $menu->is_test,
         ]);
     }
 

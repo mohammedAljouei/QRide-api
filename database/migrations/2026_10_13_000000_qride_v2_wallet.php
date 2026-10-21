@@ -50,6 +50,8 @@ return new class extends Migration
             $table->json('cashback_odds')->nullable(); // e.g. {"1":0,"2":0,"3":0,"4":15,"5":85}; null = always cashback_percent
             $table->decimal('wallet_min_balance', 10, 2)->default(10); // the wallet can be used once the balance reaches this
             $table->string('vat_number')->nullable(); // ZATCA VAT number printed on the shop's receipts
+            // QRide's own test shop: any receipt is accepted, again and again (no VAT, age or daily checks). Never a real shop.
+            $table->boolean('is_test')->default(false);
         });
 
         // Receipts customers scanned to earn cashback at the counter (each receipt once)
@@ -95,7 +97,7 @@ return new class extends Migration
         });
 
         Schema::table('menus', function (Blueprint $table) {
-            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds', 'wallet_min_balance', 'vat_number']);
+            $table->dropColumn(['wallet_enabled', 'cashback_percent', 'cashback_odds', 'wallet_min_balance', 'vat_number', 'is_test']);
         });
 
         Schema::dropIfExists('counter_charges');

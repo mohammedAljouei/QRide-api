@@ -41,13 +41,13 @@ class ReceiptController extends Controller
         if (!$receipt || !$receipt['invoice_at'] || $receipt['total'] <= 0) {
             return $this->fail('receipt_unreadable');
         }
-        if (!$menu->vat_number || preg_replace('/\D/', '', $menu->vat_number) !== $receipt['vat_number']) {
+        $testMode = (bool) $menu->is_test; // QRide's test shop: any receipt, again and again
+        if (!$testMode && (!$menu->vat_number || preg_replace('/\D/', '', $menu->vat_number) !== $receipt['vat_number'])) {
             return $this->fail('receipt_other_shop');
         }
         if ($receipt['total'] > self::MAX_TOTAL) {
             return $this->fail('receipt_too_large');
         }
-        $testMode = self::testMode();
         if (!$testMode && $receipt['invoice_at']->lt(now()->subHours(self::MAX_AGE_HOURS))) {
             return $this->fail('receipt_too_old');
         }
@@ -72,7 +72,7 @@ class ReceiptController extends Controller
 
                 // A car order's receipt: its cashback is added automatically, so the receipt earns nothing.
                 // Same customer, same total, printed between 10 min before and 60 min after the order was placed;
-                // each car order matches one receipt only. (Test mode: the receipt counts as printed now.)
+                // each car order matches one receipt only. (Test shop: the receipt counts as printed now.)
                 $carOrder = self::matchingCarOrder($menu->id, $customer->id, $receipt, $testMode ? now() : $receipt['invoice_at']);
                 if ($carOrder) {
                     ReceiptClaim::create([
@@ -134,12 +134,6 @@ class ReceiptController extends Controller
                 }
                 return false;
             });
-    }
-
-    // Testing only: lets one real receipt be claimed again and again. Ignored on the live server.
-    public static function testMode(): bool
-    {
-        return (bool) config('services.receipts.test_mode') && !app()->environment('production');
     }
 
     private function fail(string $code)
