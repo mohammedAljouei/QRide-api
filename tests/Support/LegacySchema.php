@@ -25,7 +25,10 @@ trait LegacySchema
             $this->buildSqliteSchema();
         }
 
-        Artisan::call('migrate', ['--path' => 'database/migrations/2026_10_13_000000_qride_v2_wallet.php']);
+        Artisan::call('migrate', ['--path' => [
+            'database/migrations/2026_10_13_000000_qride_v2_wallet.php',
+            'database/migrations/2026_10_22_000000_qride_panel_passwords.php',
+        ]]);
     }
 
     private function loadLiveSchema(string $dump): void

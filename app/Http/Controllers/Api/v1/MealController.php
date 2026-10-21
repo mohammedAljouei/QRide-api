@@ -25,6 +25,9 @@ class MealController extends Controller
     {
         // Find the meal by ID
         $meal = Meal::findOrFail($mealId);
+        if (!self::ownsMenu($request->user(), (int) $meal->section?->menu_id)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
         // Toggle the status
         $meal->status = $meal->status == 1 ? 0 : 1;
@@ -73,10 +76,29 @@ class MealController extends Controller
     }
 
 
+    // A shop's staff or branch manager only touches their own shop's meals (QRide admins: any shop)
+    private static function ownsMenu($user, int $menuId): bool
+    {
+        if ($user instanceof \App\Models\User) {
+            return $user->tokenCan('qrideAdmin');
+        }
+        $menu = \App\Models\Menu::find($menuId);
+        if (!$menu) {
+            return false;
+        }
+        if ($user instanceof \App\Models\Admin) {
+            return (int) $menu->admin_id === (int) $user->id;
+        }
+        if ($user instanceof \App\Models\SuperAdmin) {
+            return (int) $menu->super_admin_id === (int) $user->id;
+        }
+        return false;
+    }
+
     public function byMenuId(Request $request, $menuId)
     {
         $user = $request->user();
-        if (!$user) {
+        if (!$user || !self::ownsMenu($user, (int) $menuId)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

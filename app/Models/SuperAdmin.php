@@ -38,6 +38,9 @@ class SuperAdmin extends Authenticatable
 {
     use HasApiTokens, HasFactory;
 
+    // QRide admin panel: the encrypted copy of the password is never sent by the normal APIs
+    protected $hidden = ['panel_password'];
+
     protected $fillable = [
         "name",
         "email", 

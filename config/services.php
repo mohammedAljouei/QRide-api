@@ -49,6 +49,9 @@ return [
     // (on the live server the code sits in public_html/laravel_deploy_test, so ../icons is public_html/icons)
     'qride' => [
         'icons_path' => env('QRIDE_ICONS_PATH', base_path('../icons')),
+        // meal photos from the branch manager's menu editor (same folder the old upload.php used)
+        'uploads_path' => env('QRIDE_UPLOADS_PATH', base_path('../img/uploads')),
+        'uploads_url' => env('QRIDE_UPLOADS_URL', 'https://qride.net/img/uploads'),
     ],
 
 ];

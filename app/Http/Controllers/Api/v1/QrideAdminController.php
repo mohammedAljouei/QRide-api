@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -27,8 +28,8 @@ class QrideAdminController extends Controller
     {
         $this->authorizeQride($request);
         $menus = Menu::orderByDesc('id')->get();
-        $owners = SuperAdmin::whereIn('id', $menus->pluck('super_admin_id'))->pluck('email', 'id');
-        $staff = Admin::whereIn('id', $menus->pluck('admin_id'))->pluck('email', 'id');
+        $owners = SuperAdmin::whereIn('id', $menus->pluck('super_admin_id'))->get()->keyBy('id');
+        $staff = Admin::whereIn('id', $menus->pluck('admin_id'))->get()->keyBy('id');
 
         return response()->json($menus->map(fn (Menu $m) => [
             'id' => $m->id,
@@ -38,8 +39,11 @@ class QrideAdminController extends Controller
             'walletEnabled' => (bool) $m->wallet_enabled,
             'isTest' => (bool) $m->is_test,
             'maxPercent' => $m->wallet_enabled ? max(WalletService::wheel($m)) : 0,
-            'ownerEmail' => $owners[$m->super_admin_id] ?? null,
-            'staffEmail' => $staff[$m->admin_id] ?? null,
+            'logo' => self::logoUrl($m->id),
+            'ownerEmail' => $owners[$m->super_admin_id]->email ?? null,
+            'ownerPassword' => self::readPassword($owners[$m->super_admin_id] ?? null),
+            'staffEmail' => $staff[$m->admin_id]->email ?? null,
+            'staffPassword' => self::readPassword($staff[$m->admin_id] ?? null),
         ]));
     }
 
@@ -64,6 +68,8 @@ class QrideAdminController extends Controller
         $menu = DB::transaction(function () use ($data, $png) {
             $owner = SuperAdmin::create(['name' => $data['owner']['name'], 'email' => $data['owner']['email'], 'password' => $data['owner']['password']]);
             $staff = Admin::create(['name' => $data['staff']['name'], 'email' => $data['staff']['email'], 'password' => $data['staff']['password']]);
+            self::keepPassword($owner, $data['owner']['password']);
+            self::keepPassword($staff, $data['staff']['password']);
             $menu = new Menu();
             $menu->forceFill(['admin_id' => $staff->id, 'super_admin_id' => $owner->id, 'version' => 1, 'status' => 'open']);
             $this->fillShop($menu, $data);
@@ -109,8 +115,47 @@ class QrideAdminController extends Controller
         $password = self::newPassword();
         $account->password = $password; // hashed by the model
         $account->save();
+        self::keepPassword($account, $password);
         $account->tokens()->delete(); // signs the old password out everywhere
         return response()->json(['password' => $password]);
+    }
+
+    // Opens the shop's staff dashboard or branch manager's menu editor as that shop, without its password:
+    // a normal token of that account
+    public function portal(Request $request, $id)
+    {
+        $this->authorizeQride($request);
+        $who = $request->validate(['who' => ['required', Rule::in(['staff', 'owner'])]])['who'];
+        $menu = Menu::findOrFail($id);
+        $token = $who === 'staff'
+            ? Admin::findOrFail($menu->admin_id)->createToken('qride-portal', ['admin'])
+            : SuperAdmin::findOrFail($menu->super_admin_id)->createToken('qride-portal', ['superAdmin']);
+        return response()->json(['token' => $token->plainTextToken, 'menuId' => $menu->id]);
+    }
+
+    // The user asked to see the passwords in the panel: a copy encrypted with the app key (login uses the hash)
+    private static function keepPassword($account, string $password): void
+    {
+        $account->forceFill(['panel_password' => Crypt::encryptString($password)])->save();
+    }
+
+    private static function readPassword($account): ?string
+    {
+        if (!$account?->panel_password) {
+            return null; // made before the panel: unknown until a new one is set
+        }
+        try {
+            return Crypt::decryptString($account->panel_password);
+        } catch (\Throwable $e) {
+            return null; // app key changed
+        }
+    }
+
+    // The logo URL with its file time, so a new logo shows straight away (the CDN caches the old one)
+    private static function logoUrl(int $id): ?string
+    {
+        $file = config('services.qride.icons_path') . "/$id.png";
+        return is_file($file) ? "https://qride.net/icons/$id.png?v=" . filemtime($file) : null;
     }
 
     public static function newPassword(): string
@@ -315,8 +360,11 @@ class QrideAdminController extends Controller
                 'vatNumber' => $menu->vat_number,
                 'isTest' => (bool) $menu->is_test,
             ],
-            'ownerEmail' => SuperAdmin::find($menu->super_admin_id)?->email,
-            'staffEmail' => Admin::find($menu->admin_id)?->email,
+            'logo' => self::logoUrl($menu->id),
+            'ownerEmail' => ($owner = SuperAdmin::find($menu->super_admin_id))?->email,
+            'ownerPassword' => self::readPassword($owner),
+            'staffEmail' => ($staff = Admin::find($menu->admin_id))?->email,
+            'staffPassword' => self::readPassword($staff),
         ];
     }
 }

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\v1\CustomerAuthController;
 use App\Http\Controllers\Api\v1\ReceiptController;
 use App\Http\Controllers\Api\v1\CounterController;
 use App\Http\Controllers\Api\v1\QrideAdminController;
+use App\Http\Controllers\Api\v1\ManagerMenuController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -192,4 +193,20 @@ Route::group(['prefix' => 'v1/qride', 'middleware' => ['auth:sanctum', 'deny.cus
     Route::get('/shops/{id}', [QrideAdminController::class, 'show'])->whereNumber('id');
     Route::post('/shops/{id}', [QrideAdminController::class, 'update'])->whereNumber('id'); // POST: multipart with the logo
     Route::post('/shops/{id}/reset-password', [QrideAdminController::class, 'resetPassword'])->whereNumber('id');
+    Route::post('/shops/{id}/portal', [QrideAdminController::class, 'portal'])->whereNumber('id');
+});
+
+// Branch manager's menu editor (/manager): their own shop only (checked in the controller)
+Route::group(['prefix' => 'v1/manager/{menuId}', 'middleware' => ['auth:sanctum', 'deny.customers', 'throttle:240,1'], 'where' => ['menuId' => '[0-9]+']], function () {
+    Route::get('/menu', [ManagerMenuController::class, 'show']);
+    Route::post('/sections', [ManagerMenuController::class, 'createSection']);
+    Route::post('/sections/order', [ManagerMenuController::class, 'orderSections']);
+    Route::post('/sections/{sectionId}', [ManagerMenuController::class, 'updateSection'])->whereNumber('sectionId');
+    Route::delete('/sections/{sectionId}', [ManagerMenuController::class, 'deleteSection'])->whereNumber('sectionId');
+    Route::post('/sections/{sectionId}/order', [ManagerMenuController::class, 'orderMeals'])->whereNumber('sectionId');
+    Route::post('/meals', [ManagerMenuController::class, 'createMeal']);
+    Route::post('/meals/{mealId}', [ManagerMenuController::class, 'updateMeal'])->whereNumber('mealId');
+    Route::post('/meals/{mealId}/available', [ManagerMenuController::class, 'setAvailable'])->whereNumber('mealId');
+    Route::delete('/meals/{mealId}', [ManagerMenuController::class, 'deleteMeal'])->whereNumber('mealId');
+    Route::post('/images', [ManagerMenuController::class, 'uploadImage']);
 });

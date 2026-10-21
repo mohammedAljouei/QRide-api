@@ -161,6 +161,46 @@ class QrideAdminTest extends WalletTestCase
         $this->postJson('/api/login-admin', ['email' => 'new.staff@cafe.sa', 'password' => 'staff-pass-1'])->assertOk();
     }
 
+    public function test_the_panel_shows_the_passwords_it_set_and_keeps_them_encrypted(): void
+    {
+        $id = $this->create($this->form(), $this->logo())->json('id');
+        $rows = collect($this->getJson('/api/v1/qride/shops', ['Authorization' => "Bearer {$this->qrideToken}"])->json())->keyBy('id');
+        $this->assertSame('owner-pass-1', $rows[$id]['ownerPassword']);
+        $this->assertSame('staff-pass-1', $rows[$id]['staffPassword']);
+        $this->assertNull($rows[$this->shop->id]['staffPassword']); // made before the panel: unknown
+        $this->assertStringStartsWith('https://qride.net/icons/' . $id . '.png?v=', $rows[$id]['logo']);
+        $this->assertNull($rows[$this->shop->id]['logo']);
+
+        $stored = DB::table('admins')->where('email', 'new.staff@cafe.sa')->value('panel_password');
+        $this->assertStringNotContainsString('staff-pass-1', $stored);
+        $this->assertArrayNotHasKey('panel_password', Admin::where('email', 'new.staff@cafe.sa')->first()->toArray());
+
+        $new = $this->postJson("/api/v1/qride/shops/$id/reset-password", ['who' => 'owner'], ['Authorization' => "Bearer {$this->qrideToken}"])->json('password');
+        $this->getJson("/api/v1/qride/shops/$id", ['Authorization' => "Bearer {$this->qrideToken}"])->assertJson(['ownerPassword' => $new, 'staffPassword' => 'staff-pass-1']);
+    }
+
+    public function test_portal_opens_the_shops_staff_dashboard(): void
+    {
+        $id = $this->create($this->form(), $this->logo())->json('id');
+        $r = $this->postJson("/api/v1/qride/shops/$id/portal", ['who' => 'staff'], ['Authorization' => "Bearer {$this->qrideToken}"])->assertOk()->assertJson(['menuId' => $id]);
+        $this->getJson("/api/v1/meals/shop/$id", ['Authorization' => 'Bearer ' . $r->json('token')])->assertOk();
+        // only QRide admins can open it
+        $this->postJson("/api/v1/qride/shops/$id/portal", ['who' => 'staff'], ['Authorization' => "Bearer {$this->adminToken}"])->assertStatus(403);
+    }
+
+    public function test_staff_can_only_hide_meals_of_their_own_shop(): void
+    {
+        $id = $this->create($this->form(), $this->logo())->json('id');
+        $other = $this->postJson('/api/login-admin', ['email' => 'new.staff@cafe.sa', 'password' => 'staff-pass-1'])->json('token');
+        $this->postJson("/api/v1/meals/status/{$this->latte->id}", [], ['Authorization' => "Bearer $other"])->assertStatus(403);
+        $this->getJson("/api/v1/meals/shop/{$this->shop->id}", ['Authorization' => "Bearer $other"])->assertStatus(403);
+        $this->assertEquals(1, $this->latte->fresh()->status);
+
+        $this->postJson("/api/v1/meals/status/{$this->latte->id}", [], ['Authorization' => "Bearer {$this->adminToken}"])->assertOk();
+        $this->assertEquals(0, $this->latte->fresh()->status);
+        $this->getJson("/api/v1/meals/shop/{$this->shop->id}", ['Authorization' => "Bearer {$this->adminToken}"])->assertOk();
+    }
+
     public function test_reset_password_gives_a_new_one_and_signs_out_the_old_tokens(): void
     {
         $id = $this->create($this->form(), $this->logo())->json('id');
