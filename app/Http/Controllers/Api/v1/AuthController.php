@@ -25,14 +25,20 @@ class AuthController extends Controller
         ]);
 
         $qrideAdmin = User::where('email', $request->email)->first();
+        $stored = (string) $qrideAdmin?->getRawOriginal('password');
 
-        // if (!$qrideAdmin || !Hash::check($request->password, $qrideAdmin->password)) {
-        
-        if (!$qrideAdmin || $request->password !== $qrideAdmin->password) {
-
+        // Passwords are hashed. An old account still holding its password as plain text is accepted once
+        // and hashed on the spot (the model's 'hashed' cast), so it never stays readable in the database.
+        $isHash = str_starts_with($stored, '$2y$') || str_starts_with($stored, '$argon');
+        $ok = $qrideAdmin && ($isHash ? Hash::check($request->password, $stored) : hash_equals($stored, (string) $request->password));
+        if (!$ok) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+        if (!$isHash) {
+            $qrideAdmin->password = $request->password;
+            $qrideAdmin->save();
         }
 
         return response()->json(['id'=> $qrideAdmin->id, 'token' => $qrideAdmin->createToken('authToken',  ['qrideAdmin'])->plainTextToken]);

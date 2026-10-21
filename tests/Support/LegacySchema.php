@@ -72,6 +72,13 @@ trait LegacySchema
         Schema::create('customer_checkins', function (Blueprint $t) {
             $t->id(); $t->integer('order_id'); $t->timestamp('checkin_time')->nullable();
         });
+        Schema::create('users', function (Blueprint $t) {
+            $t->id(); $t->string('name'); $t->string('email'); $t->timestamp('email_verified_at')->nullable();
+            $t->string('password'); $t->string('remember_token')->nullable(); $t->timestamps();
+        });
+        Schema::create('timeslots', function (Blueprint $t) {
+            $t->increments('id'); $t->integer('menu_id'); $t->string('day'); $t->time('start_time'); $t->time('end_time');
+        });
 
         Artisan::call('migrate', ['--path' => 'database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php']);
     }

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\v1\WalletController;
 use App\Http\Controllers\Api\v1\CustomerAuthController;
 use App\Http\Controllers\Api\v1\ReceiptController;
 use App\Http\Controllers\Api\v1\CounterController;
+use App\Http\Controllers\Api\v1\QrideAdminController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -34,7 +35,7 @@ use App\Http\Controllers\Api\v1\CounterController;
 // Route::post('/register', [AuthController::class, 'register']);
 
 // Login
-Route::post('/login-qride-admin', [AuthController::class, 'loginQrideAdmin']);
+Route::post('/login-qride-admin', [AuthController::class, 'loginQrideAdmin'])->middleware('throttle:10,1');
 Route::post('/login-super-admin', [AuthController::class, 'loginSuperAdmin']);
 Route::post('/login-admin', [AuthController::class, 'loginAdmin']);
 
@@ -182,4 +183,13 @@ Route::group(['prefix' => 'v1', 'middleware' => ['auth:sanctum', 'deny.customers
     Route::get('/counter/scan', [CounterController::class, 'scan']);
     Route::post('/counter/charges', [CounterController::class, 'createCharge']);
     Route::get('/counter/charges/{charge}', [CounterController::class, 'chargeStatus']);
+});
+
+// QRide admin panel (/qride): onboarding and editing shops. The controller allows QRide admin logins only.
+Route::group(['prefix' => 'v1/qride', 'middleware' => ['auth:sanctum', 'deny.customers', 'throttle:120,1']], function () {
+    Route::get('/shops', [QrideAdminController::class, 'shops']);
+    Route::post('/shops', [QrideAdminController::class, 'store']);
+    Route::get('/shops/{id}', [QrideAdminController::class, 'show'])->whereNumber('id');
+    Route::post('/shops/{id}', [QrideAdminController::class, 'update'])->whereNumber('id'); // POST: multipart with the logo
+    Route::post('/shops/{id}/reset-password', [QrideAdminController::class, 'resetPassword'])->whereNumber('id');
 });

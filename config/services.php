@@ -45,4 +45,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // QRide admin panel: shop logos are saved here as {shopId}.png and served as qride.net/icons/{shopId}.png
+    // (on the live server the code sits in public_html/laravel_deploy_test, so ../icons is public_html/icons)
+    'qride' => [
+        'icons_path' => env('QRIDE_ICONS_PATH', base_path('../icons')),
+    ],
+
 ];
