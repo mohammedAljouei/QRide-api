@@ -7,7 +7,6 @@ use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\AuthController;
-use App\Http\Controllers\Api\v1\OtpController;
 
 use App\Http\Controllers\Api\v1\SectionController;
 use App\Http\Controllers\Api\v1\MealController;
@@ -72,8 +71,6 @@ Route::group(['prefix' => 'v1' , 'namespace' => 'App\Http\Controllers\Api\v1'], 
    Route::get('/menu/{menu}/shop-info', 'MenuController@getShopInfoMenu'); // added by mohammed
    
 
-   Route::post('/generate-otp', 'OtpController@generateOTP');
-   Route::post('/verify-otp',  'OtpController@verifyOTP');
    Route::post('/place-order', 'OrderController@placeOrder'); 
    Route::post('/post-feedback', 'SuggestionController@postFeedBack'); 
 

@@ -20,13 +20,9 @@ class OtpService
         if (self::driver() === 'log') {
             $requestId = 'test-' . Str::random(24);
             Log::info("OTP (log driver) for $phone: " . config('services.otp.test_code'));
-        } elseif (self::driver() === 'twilio') {
+        } else {
             $response = self::twilio()->post('Verifications', ['To' => '+' . $phone, 'Channel' => 'sms'])->throw();
             $requestId = 'tw-' . $response->json('sid');
-        } else {
-            $client = new \Vonage\Client(new \Vonage\Client\Credentials\Basic(config('services.vonage.key'), config('services.vonage.secret')));
-            $response = $client->verify()->start(new \Vonage\Verify\Request($phone, config('services.vonage.brand')));
-            $requestId = $response->getRequestId();
         }
 
         Cache::put(self::key($requestId), $phone, now()->addMinutes(self::TTL_MINUTES));
@@ -43,18 +39,10 @@ class OtpService
 
         if (self::driver() === 'log') {
             $ok = hash_equals((string) config('services.otp.test_code'), $code);
-        } elseif (self::driver() === 'twilio') {
+        } else {
             // Checked against the phone the code was sent to (kept on our server), never one sent by the app
             $response = self::twilio()->post('VerificationCheck', ['To' => '+' . $phone, 'Code' => $code]);
             $ok = $response->successful() && $response->json('status') === 'approved';
-        } else {
-            try {
-                $client = new \Vonage\Client(new \Vonage\Client\Credentials\Basic(config('services.vonage.key'), config('services.vonage.secret')));
-                $client->verify()->check($requestId, $code); // throws unless the code is right
-                $ok = true;
-            } catch (\Throwable $e) {
-                $ok = false; // wrong code, expired or too many attempts
-            }
         }
 
         if ($ok) {
