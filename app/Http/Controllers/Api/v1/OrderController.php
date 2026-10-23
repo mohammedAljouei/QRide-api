@@ -24,34 +24,45 @@ use Illuminate\Support\Facades\DB;
 class OrderController extends Controller
 {
 
+    // An order nobody accepted within this time is timed out (by the server, whatever the customer's phone does)
+    public const TIMEOUT_SECONDS = 180;
+
     public function setTimeOut($orderId)
     {
-        // Find the order by ID
         $order = Order::findOrFail($orderId);
-
-        // Check if the order status is still NEW
         if ($order->status !== 'NEW') {
             return response()->json(['error' => 'Sorry, action already taken on this order.'], 422);
         }
-
-        // Check if the order was created more than 3 minutes ago
-        $createdAt = Carbon::parse($order->created_at);
-        $now = Carbon::now();
-        $diffInSeconds = $now->diffInSeconds($createdAt);
-
-        if ($diffInSeconds > 180) {
-            // Update the status to TIMEOUT
-            $order->status = 'TIMEOUT';
-            $order->save();
-            WalletService::releaseOrder($order); // v2 wallet: give back any held amount
-
-            $idForTimeOut = $order->menu_id . "3";
-            event(new TimeOut($idForTimeOut));
-
+        if (self::timeoutIfLate($order)) {
             return response()->json(['message' => 'Order status updated to TIMEOUT due to inactivity.']);
-        } else {
-            return response()->json(['message' => 'Order has not been inactive long enough to timeout.']);
         }
+        return response()->json(['message' => 'Order has not been inactive long enough to timeout.']);
+    }
+
+    // Seconds the shop still has to accept a NEW order
+    private static function secondsLeft(Order $order): int
+    {
+        return max(0, self::TIMEOUT_SECONDS - Carbon::parse($order->created_at)->diffInSeconds(Carbon::now()));
+    }
+
+    // NEW for longer than the limit: TIMEOUT, any wallet hold released, and the staff dashboard told. Only once.
+    private static function timeoutIfLate(Order $order): bool
+    {
+        if ($order->status !== 'NEW' || self::secondsLeft($order) > 0) {
+            return false;
+        }
+        $updated = Order::whereKey($order->id)->where('status', 'NEW')->update(['status' => 'TIMEOUT']);
+        if (!$updated) {
+            return false; // accepted or timed out a moment ago by another request
+        }
+        $order->status = 'TIMEOUT';
+        try {
+            WalletService::releaseOrder($order); // v2 wallet: give back any held amount
+        } catch (\Throwable $e) {
+            Log::error('Wallet release failed for timed out order ' . $order->id . ': ' . $e->getMessage());
+        }
+        event(new TimeOut($order->menu_id . "3"));
+        return true;
     }
 
 
@@ -192,6 +203,11 @@ class OrderController extends Controller
 
     public function filterOrders(Request $request, $menuId)
     {
+        // Orders nobody accepted in time are timed out before the staff list is built
+        Order::where('menu_id', $menuId)->where('status', 'NEW')
+            ->where('created_at', '<', Carbon::now()->subSeconds(self::TIMEOUT_SECONDS))
+            ->get()->each(fn (Order $o) => self::timeoutIfLate($o));
+
         $query = Order::query();
 
         // Filter by menu ID from the URL parameter
@@ -282,11 +298,14 @@ class OrderController extends Controller
 
 
 
-        // Construct the response object
-        $response = [
+        self::timeoutIfLate($order);
 
+        $response = [
             'status' => $order->status,
         ];
+        if ($order->status === 'NEW') {
+            $response['secondsLeft'] = self::secondsLeft($order); // the customer's countdown
+        }
 
         // v2 wallet: the drawn percent (revealed right away) and, once done, the amount earned
         if ($order->cashback_percent > 0) {
